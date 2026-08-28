@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🧪 Quiz di Chimica — ripasso interattivo</title>
+<style>
+  :root {
+    --bg: #f0f4f8;
+    --card: #ffffff;
+    --ink: #1e293b;
+    --muted: #64748b;
+    --accent: #e63946;
+    --accent-dark: #c1121f;
+    --ok: #2a9d8f;
+    --ok-bg: #d8f3ef;
+    --ko: #e63946;
+    --ko-bg: #fde8ea;
+    --border: #e2e8f0;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.55;
+    min-height: 100vh;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 24px 16px 60px; }
+
+  header.top {
+    text-align: center;
+    padding: 26px 0 10px;
+  }
+  header.top h1 { font-size: 1.7rem; letter-spacing: -0.5px; }
+  header.top p { color: var(--muted); margin-top: 6px; font-size: .95rem; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, .05);
+    margin-top: 18px;
+  }
+
+  .hidden { display: none !important; }
+
+  /* ------- start screen ------- */
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 4px; }
+  .chip {
+    border: 1.5px solid var(--border);
+    background: #fff;
+    color: var(--ink);
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-size: .9rem;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .chip:hover { border-color: var(--accent); color: var(--accent); }
+  .chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  .opt-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-top: 16px; font-size: .95rem; color: var(--muted);
+    cursor: pointer; user-select: none;
+  }
+  .opt-row input { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
+
+  .btn {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 13px 28px;
+    font-size: 1.05rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: background .15s, transform .1s;
+  }
+  .btn:hover { background: var(--accent-dark); }
+  .btn:active { transform: scale(.98); }
+  .btn.secondary { background: #fff; color: var(--accent); border: 1.5px solid var(--accent); }
+  .btn.secondary:hover { background: #fff5f6; }
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  .info-list { list-style: none; margin-top: 14px; }
+  .info-list li { padding: 6px 0 6px 26px; position: relative; font-size: .95rem; }
+  .info-list li::before { content: "•"; color: var(--accent); position: absolute; left: 8px; font-weight: bold; }
+
+  /* ------- quiz screen ------- */
+  .progress-bar {
+    height: 10px; background: var(--border); border-radius: 999px;
+    overflow: hidden; margin: 14px 0 4px;
+  }
+  .progress-bar > div {
+    height: 100%; background: linear-gradient(90deg, var(--accent), #ff7b54);
+    width: 0%; transition: width .35s ease; border-radius: 999px;
+  }
+  .meta-line {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: .85rem; color: var(--muted); margin-top: 6px;
+  }
+  .badge {
+    display: inline-block;
+    background: #eef2ff; color: #4338ca;
+    border-radius: 999px; padding: 3px 12px;
+    font-size: .78rem; font-weight: 600;
+  }
+  .q-text { font-size: 1.15rem; font-weight: 600; margin: 18px 0 16px; }
+
+  .opt {
+    display: flex; align-items: flex-start; gap: 12px;
+    width: 100%; text-align: left;
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 13px 15px;
+    font-size: .98rem;
+    color: var(--ink);
+    cursor: pointer;
+    margin-bottom: 10px;
+    transition: all .15s;
+    font-family: inherit;
+  }
+  .opt:hover:not(:disabled) { border-color: var(--accent); background: #fff5f6; }
+  .opt:disabled { cursor: default; }
+  .opt .letter {
+    flex: 0 0 28px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg); border-radius: 8px;
+    font-weight: 700; font-size: .85rem; color: var(--muted);
+  }
+  .opt.correct { border-color: var(--ok); background: var(--ok-bg); }
+  .opt.correct .letter { background: var(--ok); color: #fff; }
+  .opt.wrong { border-color: var(--ko); background: var(--ko-bg); }
+  .opt.wrong .letter { background: var(--ko); color: #fff; }
+
+  .feedback {
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-top: 14px;
+    font-size: .93rem;
+    display: none;
+  }
+  .feedback.show { display: block; animation: fadeIn .3s ease; }
+  .feedback.ok { background: var(--ok-bg); border: 1px solid var(--ok); }
+  .feedback.ko { background: var(--ko-bg); border: 1px solid var(--ko); }
+  .feedback strong.tag { display: block; margin-bottom: 4px; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+  /* ------- results ------- */
+  .score-box {
+    text-align: center;
+    padding: 28px 20px;
+    border-radius: var(--radius);
+    margin-top: 18px;
+    color: #fff;
+  }
+  .score-box .num { font-size: 3.4rem; font-weight: 800; line-height: 1; }
+  .score-box .den { font-size: 1rem; opacity: .85; margin-top: 4px; }
+  .score-box .msg { font-size: 1.15rem; font-weight: 600; margin-top: 12px; }
+  .score-box .stats { font-size: .9rem; opacity: .9; margin-top: 6px; }
+  .score-box.good { background: linear-gradient(135deg, #2a9d8f, #37b89c); }
+  .score-box.mid  { background: linear-gradient(135deg, #e9a23b, #f2c14e); }
+  .score-box.bad  { background: linear-gradient(135deg, #e63946, #ff7b54); }
+
+  h2.sec { font-size: 1.25rem; margin: 26px 0 12px; }
+  .review-item {
+    border: 1px solid var(--border);
+    border-left: 5px solid var(--ko);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    background: #fff;
+    font-size: .93rem;
+  }
+  .review-item .rq { font-weight: 600; margin-bottom: 8px; }
+  .review-item .your { color: var(--ko); margin: 2px 0; }
+  .review-item .right { color: var(--ok); font-weight: 600; margin: 2px 0 6px; }
+  .review-item .exp { color: var(--muted); font-style: italic; margin-top: 6px; }
+  .review-item .mini-badge {
+    display: inline-block; font-size: .72rem; font-weight: 600;
+    background: #eef2ff; color: #4338ca; border-radius: 999px;
+    padding: 1px 10px; margin-bottom: 6px;
+  }
+  .all-ok {
+    background: var(--ok-bg); border: 1px solid var(--ok);
+    border-radius: 12px; padding: 18px; text-align: center;
+    color: #14655b; font-weight: 600; margin-top: 14px;
+  }
+  footer { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 30px; }
+  sub { font-size: .75em; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <h1>🧪 Quiz di Chimica</h1>
+    <p>10 domande a caso su 100 — alla fine il voto in decimi e le spiegazioni degli errori</p>
+  </header>
+
+  <!-- ============ START ============ -->
+  <section id="screen-start" class="card">
+    <p><strong>Il tuo test di oggi</strong></p>
+    <ul class="info-list">
+      <li><strong>10 domande</strong> scelte a caso dal banco di <strong>100 domande</strong></li>
+      <li>Una risposta esatta = <strong>1 punto</strong> (voto su 10)</li>
+      <li>Al termine: voto in decimi + <strong>riepilogo degli errori</strong> con spiegazioni</li>
+    </ul>
+
+    <h3 style="margin-top:18px">Materiale da testare</h3>
+    <div class="chips" id="chips"></div>
+
+    <label class="opt-row">
+      <input type="checkbox" id="cb-instant">
+      <span>Mostra subito il feedback (verde/rosso) dopo ogni risposta</span>
+    </label>
+
+    <div class="btn-row">
+      <button class="btn" id="btn-start">▶ Inizia il test</button>
+    </div>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section id="screen-quiz" class="card hidden">
+    <div class="progress-bar"><div id="pbar"></div></div>
+    <div class="meta-line">
+      <span id="qcount">Domanda 1 / 10</span>
+      <span class="badge" id="qchapter"></span>
+    </div>
+    <div class="q-text" id="qtext"></div>
+    <div id="qoptions"></div>
+    <div class="feedback" id="qfeedback"></div>
+    <div class="btn-row">
+      <button class="btn hidden" id="btn-next">Avanti →</button>
+    </div>
+  </section>
+
+  <!-- ============ RESULTS ============ -->
+  <section id="screen-results" class="hidden">
+    <div class="score-box" id="scorebox">
+      <div class="num" id="scorenum">0</div>
+      <div class="den">voto in decimi</div>
+      <div class="msg" id="scoremsg"></div>
+      <div class="stats" id="scorestats"></div>
+    </div>
+
+    <h2 class="sec">❌ Domande da rivedere</h2>
+    <div id="review"></div>
+
+    <div class="btn-row" style="justify-content:center">
+      <button class="btn" id="btn-retry">🔄 Nuovo test (10 domande diverse)</button>
+      <button class="btn secondary" id="btn-home">⌂ Cambia impostazioni</button>
+    </div>
+  </section>
+
+  <footer>Quiz di ripasso basato sul libro di chimica · i 10 quesiti cambiano a ogni sessione</footer>
+</div>
+
+<script>
+"use strict";
+
+/* =====================================================
+   BANCO DOMANDE — 100 quesiti
+   c = capitolo (1..4) · q = testo · o = opzioni
+   a = indice risposta corretta · e = spiegazione
+   ===================================================== */
+const CHAPTERS = {
+  1: "Cap. 1 · Tavola periodica",
+  2: "Cap. 2 · I composti chimici",
+  3: "Cap. 5 · Le reazioni chimiche",
+  4: "Cap. 7 · Velocità ed equilibrio"
+};
+
+const BANK = [
+/* ---------------- CAPITOLO 1 — TAVOLA PERIODICA ---------------- */
+{c:1,q:"Che cos'è un elemento chimico?",
+ o:["Una sostanza che non può essere scomposta in sostanze più semplici","Una miscela di più elementi","Una sostanza formata da più elementi in proporzioni costanti","Un atomo privo di elettroni"],
+ a:0,e:"L'elemento è la sostanza più semplice: non può essere scissa in altre sostanze con mezzi chimici."},
+
+{c:1,q:"Quanti elementi chimici si conoscono oggi?",
+ o:["92","108","118","128"],
+ a:2,e:"Si conoscono 118 elementi; i più pesanti sono stati ottenuti in laboratorio."},
+
+{c:1,q:"Cosa indica il numero atomico (o numero di ordine) Z di un elemento?",
+ o:["Il numero di neutroni nel nucleo","Il numero di protoni nel nucleo","La somma di protoni e neutroni","Il numero di elettroni totali"],
+ a:1,e:"Z è il numero di protoni del nucleo: in un atomo neutro è uguale al numero di elettroni."},
+
+{c:1,q:"Nella tavola periodica gli elementi sono ordinati in base a:",
+ o:["la massa atomica crescente","il numero atomico crescente","la densità crescente","la reattività crescente"],
+ a:1,e:"La tavola periodica moderna ordina gli elementi per numero atomico crescente."},
+
+{c:1,q:"Quanti gruppi (colonne verticali) ci sono nella tavola periodica?",
+ o:["7","12","18","20"],
+ a:2,e:"18 gruppi verticali e 7 periodi orizzontali."},
+
+{c:1,q:"Quanti periodi (righe orizzontali) ci sono nella tavola periodica?",
+ o:["5","6","7","18"],
+ a:2,e:"La tavola periodica ha 7 periodi e 18 gruppi."},
+
+{c:1,q:"Come si chiamano le colonne verticali della tavola periodica?",
+ o:["periodi","gruppi","cicli","ottavi"],
+ a:1,e:"Colonne verticali = gruppi; righe orizzontali = periodi."},
+
+{c:1,q:"Come si chiamano le righe orizzontali della tavola periodica?",
+ o:["gruppi","cicli","periodi","colonne"],
+ a:2,e:"Le righe orizzontali si chiamano periodi."},
+
+{c:1,q:"A quale gruppo appartengono i metalli alcalini?",
+ o:["gruppo 1","gruppo 2","gruppo 13","gruppo 17"],
+ a:0,e:"Il gruppo 1 (escluso l'idrogeno) è formato dai metalli alcalini: litio, sodio, potassio…"},
+
+{c:1,q:"A quale gruppo appartengono i metalli alcalino-terrosi?",
+ o:["gruppo 1","gruppo 2","gruppo 14","gruppo 3"],
+ a:1,e:"Il gruppo 2: berillio, magnesio, calcio, stronzio, bario."},
+
+{c:1,q:"Come si chiamano gli elementi del gruppo 17?",
+ o:["gas nobili","alcalino-terrosi","alogeni","metalloidi"],
+ a:2,e:"Il gruppo 17 è quello degli alogeni: fluoro, cloro, bromo, iodio."},
+
+{c:1,q:"Che cosa significa il nome «alogeni»?",
+ o:["«produttori di acidi»","«produttori di sali»","«produttori di metallo»","«gas rari»"],
+ a:1,e:"Dal greco «generatori di sali», perché con i metalli formano i sali (es. NaCl)."},
+
+{c:1,q:"A quale gruppo appartengono i gas nobili?",
+ o:["gruppo 1","gruppo 15","gruppo 16","gruppo 18"],
+ a:3,e:"Il gruppo 18: elio, neon, argon… sono quasi inerte e rari in natura."},
+
+{c:1,q:"Quali sono gli unici due elementi liquidi a temperatura e pressione ambiente?",
+ o:["mercurio e bromo","sodio e potassio","ferro e stagno","carbonio e zolfo"],
+ a:0,e:"Il mercurio (metallo) e il bromo (non metallo) sono gli unici elementi liquidi a TAP."},
+
+{c:1,q:"Quali sono le due forme naturali del carbonio (alloformi)?",
+ o:["quarzo e mica","diamante e grafite","carbone e coke","calce e gesso"],
+ a:1,e:"Diamante e grafite sono forme pure del carbonio con proprietà opposte."},
+
+{c:1,q:"Quale forma del carbonio conduce la corrente elettrica?",
+ o:["il diamante","la grafite","la fuliggine","entrambe"],
+ a:1,e:"Nella grafite gli elettroni sono mobili: conduce. Il diamante è isolante."},
+
+{c:1,q:"Qual è il materiale naturale più duro conosciuto?",
+ o:["il corindone","il diamante","il carbone","la grafite"],
+ a:1,e:"Il diamante è il materiale naturale più duro: ogni atomo di C è legato a 4 altri."},
+
+{c:1,q:"Come si chiamano gli elementi che esistono solo perché prodotti in laboratorio?",
+ o:["elementi transuranici","elementi nobili","elementi sintetici (artificiali)","elementi rari"],
+ a:2,e:"Gli elementi sintetici (es. plutonio) non si trovano in natura: si ottengono in laboratorio."},
+
+{c:1,q:"Cosa sono gli elementi transuranici?",
+ o:["elementi più leggeri dell'uranio","elementi con numero atomico maggiore di 92","elementi con numero atomico minore di 92","elementi gassosi"],
+ a:1,e:"I transuranici stanno «dopo l'uranio» (Z = 92): plutonio, americio, californio…"},
+
+{c:1,q:"Quali proprietà fisiche hanno i metalli?",
+ o:["sono opachi, cattivi conduttori e fragili","sono lucidi, buoni conduttori, malleabili e duttili","sono tutti gassosi e inerti","sono teneri, isolanti e volatili"],
+ a:1,e:"Luci, conducono calore e elettricità, si possono battere (malleabilità) e tirare in fili (duttilità)."},
+
+{c:1,q:"Perché i metalli conducono la corrente elettrica?",
+ o:["perché sono sempre caldi","perché possiedono elettroni di valenza liberi di muoversi","perché sono cristallini","perché contengono ioni mobili"],
+ a:1,e:"Gli elettroni di valenza dei metalli sono «liberi» di muoversi nel reticolo: è il cosiddetto gas di elettroni."},
+
+{c:1,q:"Nucleosintesi stellare: all'interno delle stelle gli elementi si formano fino a:",
+ o:["il carbonio","il ferro","il nichel","l'ossigeno"],
+ a:1,e:"Le reazioni di fusione nelle stelle producono elementi fino al ferro: oltre il ferro la fusione non rilascia più energia."},
+
+{c:1,q:"Dove si formano gli elementi più pesanti del ferro (oro, uranio…)?",
+ o:["durante il Big Bang","all'interno di stelle normali","nelle esplosioni di supernove","negli oceani"],
+ a:2,e:"Gli elementi molto pesanti nascono nelle supernove e nelle collisioni di stelle di neutroni."},
+
+{c:1,q:"Quali elementi si sono formati durante il Big Bang?",
+ o:["elio e litio","idrogeno ed elio","carbonio e ossigeno","ferro e nichel"],
+ a:1,e:"Circa 13,8 miliardi di anni fa si formarono idrogeno ed elio (e tracce di litio)."},
+
+{c:1,q:"Chi fu il chimico che per primo riconobbe la periodicità delle proprietà degli elementi?",
+ o:["Isaac Newton","Dmitri Mendeleev","Jöns Jacob Berzelius","Nicola Copernico"],
+ a:1,e:"Dmitri Mendeleev riconobbe che le proprietà degli elementi variano in modo periodico con il numero atomico."},
+
+/* ---------------- CAPITOLO 2 — I COMPOSTI ---------------- */
+{c:2,q:"Che cos'è un composto chimico?",
+ o:["una sostanza formata da due o più elementi uniti in proporzioni costanti","una miscela di due o più elementi","un elemento allo stato gassoso","un atomo isolato"],
+ a:0,e:"Il composto è formato da più elementi in proporzioni fisse (composizione definita)."},
+
+{c:2,q:"Cosa ci dice la formula chimica di un composto?",
+ o:["solo il colore della sostanza","quali elementi lo formano e in quanti atomi","la massa molare della sostanza","la temperatura di fusione"],
+ a:1,e:"La formula indica quali elementi sono presenti e il numero di atomi di ciascuno."},
+
+{c:2,q:"Qual è la formula dell'acqua?",
+ o:["HO₂","H₂O","H₂O₂","H₃O"],
+ a:1,e:"L'acqua è H₂O: due atomi di idrogeno e uno di ossigeno. (H₂O₂ è il perossido di idrogeno.)"},
+
+{c:2,q:"Qual è la formula dell'anidride carbonica?",
+ o:["CO","CO₂","C₂O₂","CuO"],
+ a:1,e:"CO₂: un atomo di carbonio e due di ossigeno. La CO (monossido) è un altro composto."},
+
+{c:2,q:"Come si chiamano i composti formati da due soli elementi?",
+ o:["ternari","binari","quaternari","nobili"],
+ a:1,e:"Binari = due elementi (es. H₂O, NaCl, CO₂)."},
+
+{c:2,q:"Come si chiamano i composti formati da tre elementi?",
+ o:["binari","ternari","quaternari","nobili"],
+ a:1,e:"Ternari = tre elementi (es. H₂SO₄, NaOH, Na₂CO₃)."},
+
+{c:2,q:"Come si chiamano i composti formati da ossigeno e un altro elemento?",
+ o:["idruri","ossidi","sali","anidridi"],
+ a:1,e:"Gli ossidi: es. H₂O, CO₂, CaO, SO₃."},
+
+{c:2,q:"Un ossido di un metallo (es. CaO) si chiama:",
+ o:["anidride","ossido basico","acido ossigenato","idrossido"],
+ a:1,e:"Gli ossidi dei metalli sono basici: con l'acqua formano idrossidi."},
+
+{c:2,q:"Un ossido di un non metallo (es. CO₂, SO₃) si chiama:",
+ o:["ossido basico","anidride","idrossido","idruro"],
+ a:1,e:"Gli ossidi dei non metalli sono acidi, detti anidridi: con l'acqua formano acidi."},
+
+{c:2,q:"Che reazione è CaO + H₂O → Ca(OH)₂?",
+ o:["un'esplosione","la formazione di un idrossido a partire da un ossido basico","la decomposizione dell'acqua","la formazione di un acido"],
+ a:1,e:"Gli ossidi basici (metallo + ossigeno) reagiscono con l'acqua formando idrossidi."},
+
+{c:2,q:"Che reazione è SO₃ + H₂O → H₂SO₄?",
+ o:["la formazione di un acido a partire da un'anidride","la decomposizione dell'acqua","una reazione di esplosione","la formazione di un idrossido"],
+ a:0,e:"Le anidridi (ossidi acidi) reagiscono con l'acqua formando acidi ossigenati."},
+
+{c:2,q:"Come si chiamano i composti formati da idrogeno e un altro elemento?",
+ o:["ossidi","idruri","alogenuri","idrossidi"],
+ a:1,e:"Gli idruri: es. NaH, CaH₂, HCl, NH₃, H₂S."},
+
+{c:2,q:"Come si chiamano i composti formati da un alogeno e un altro elemento?",
+ o:["ossidi","alogenuri (sali)","idruri","anidridi"],
+ a:1,e:"Gli alogenuri: es. NaCl (cloruro di sodio), CaF₂, KBr."},
+
+{c:2,q:"Qual è il nome comune del composto NaCl?",
+ o:["soda caustica","sale da cucina (cloruro di sodio)","acido cloridrico","bicarbonato"],
+ a:1,e:"Il cloruro di sodio è il comune sale da cucina."},
+
+{c:2,q:"Come si chiamano i composti che contengono il gruppo OH?",
+ o:["ossidi","idrossidi","anidridi","sali"],
+ a:1,e:"Gli idrossidi contengono il gruppo idrossido OH⁻: es. NaOH, KOH, Ca(OH)₂."},
+
+{c:2,q:"Come si chiamano i composti ternari formati da idrogeno, ossigeno e un non metallo?",
+ o:["idrossidi","sali","acidi","alogenuri"],
+ a:2,e:"Gli acidi (ossigenati): es. H₂SO₄, HNO₃, H₃PO₄."},
+
+{c:2,q:"Qual è la formula dell'idrossido di sodio?",
+ o:["NaCl","NaOH","Na₂O","NaHCO₃"],
+ a:1,e:"NaOH: sodio + gruppo OH. È la soda caustica."},
+
+{c:2,q:"Qual è la formula dell'acido solforico?",
+ o:["H₂SO₄","HCl","HNO₃","H₂SO₃"],
+ a:0,e:"H₂SO₄: l'acido delle batterie. HCl è l'acido cloridrico."},
+
+{c:2,q:"Cosa sono gli isomeri?",
+ o:["due elementi con la stessa formula bruta","composti con la stessa formula bruta ma struttura diversa","isotopi dello stesso elemento","miscelle gassose"],
+ a:1,e:"Es. C₂H₆O può essere etanolo (C₂H₅OH) o dimetiletere (CH₃OCH₃): stessa formula, struttura diversa."},
+
+{c:2,q:"A cosa serve la formula di struttura (di Lewis)?",
+ o:["a indicare solo il numero di atomi","a mostrare come gli atomi sono legati tra loro","a indicare la massa della molecola","a pesare la molecola"],
+ a:1,e:"La formula di struttura mostra i legami tra atomi e, spesso, anche la forma della molecola."},
+
+{c:2,q:"Qual è la forma della molecola dell'acqua?",
+ o:["lineare","angolare","triangolare piana","tetraedrica"],
+ a:1,e:"La molecola di H₂O ha forma angolare (angolo H–O–H ≈ 104,5°)."},
+
+{c:2,q:"Come si chiama il composto HCl?",
+ o:["cloruro di idrogeno (acido cloridrico)","idrossido di cloro","cloruro di sodio","anidride clorosa"],
+ a:0,e:"HCl è l'idruro acido dell'alogeno: in acqua diventa acido cloridrico."},
+
+{c:2,q:"Come si chiama il composto NH₃?",
+ o:["ammoniaca","anidride nitrosa","nitrato di idrogeno","ammonio"],
+ a:0,e:"NH₃ è l'ammoniaca: è un idruro del non metallo azoto."},
+
+{c:2,q:"In soluzione acquosa gli acidi liberano:",
+ o:["ioni OH⁻","ioni H₂⁺","ioni H⁺","ioni Na⁺"],
+ a:2,e:"Gli acidi in acqua liberano ioni idrogeno H⁺: è la proprietà che li caratterizza."},
+
+{c:2,q:"Come si chiamano i composti ternari formati da un metallo, ossigeno e un non metallo (es. Na₂SO₄, CaCO₃)?",
+ o:["acidi","idrossidi","sali","ossidi"],
+ a:2,e:"I sali: es. solfato di sodio (Na₂SO₄), carbonato di calcio (CaCO₃)."},
+
+/* ---------------- CAPITOLO 3 — LE REAZIONI ---------------- */
+{c:3,q:"Che cos'è una reazione chimica?",
+ o:["un cambiamento di stato della materia","un processo in cui i reagenti si trasformano in sostanze nuove (prodotti)","una mescolanza fisica di sostanze","una variazione di stato fisico"],
+ a:1,e:"In una reazione chimica i reagenti si trasformano in prodotti: la composizione delle sostanze cambia."},
+
+{c:3,q:"Nell'equazione chimica i reagenti si trovano:",
+ o:["a destra della freccia","a sinistra della freccia","sopra la freccia","nella stessa riga dei prodotti"],
+ a:1,e:"A sinistra i reagenti (sostanze di partenza), a destra i prodotti."},
+
+{c:3,q:"Nell'equazione chimica la freccia (→) significa:",
+ o:["«è uguale a»","«reagisce per dare»","«si scioglie in»","«equivale a»"],
+ a:1,e:"La freccia si legge «reagisce per dare» (o «si trasforma in»)."},
+
+{c:3,q:"Cosa sono i coefficienti stechiometrici?",
+ o:["i numeri davanti alle formule che indicano le proporzioni in cui le sostanze reagiscono","i simboli degli elementi","i nomi dei reagenti","i sottoindici delle formule"],
+ a:0,e:"I coefficienti moltiplicano l'intera formula: indicano quante particelle di ogni sostanza partecipano."},
+
+{c:3,q:"Quale legge stabilisce che «in natura nulla si crea e nulla si distrugge, ma tutto si trasforma»?",
+ o:["la legge di Proust","la legge di Lavoisier","la legge di Dalton","la legge di Gay-Lussac"],
+ a:1,e:"È la legge di conservazione della massa di Lavoisier: la massa dei reagenti è uguale a quella dei prodotti."},
+
+{c:3,q:"Quale legge stabilisce che ogni composto ha una composizione in massa costante?",
+ o:["la legge di Lavoisier","la legge delle proporzioni definite di Proust","la legge delle proporzioni multiple di Dalton","la legge dei gas ideali"],
+ a:1,e:"Proust: un composto è sempre formato dagli stessi elementi nella stessa proporzione in massa."},
+
+{c:3,q:"Quale legge stabilisce che due elementi possono combinarsi in rapporti di numeri interi piccoli?",
+ o:["la legge di Lavoisier","la legge di Proust","la legge delle proporzioni multiple di Dalton","la legge della conservazione della massa"],
+ a:2,e:"Dalton: se due elementi formano più composti, le masse di uno che si combinano con una massa fissa dell'altro stanno in rapporto di numeri interi piccoli."},
+
+{c:3,q:"Durante una reazione chimica gli atomi:",
+ o:["vengono distrutti","si creano nuovi atomi","non si creano né si distruggono: si riorganizzano","cambiano di stato"],
+ a:2,e:"Gli atomi si riorganizzano per formare i prodotti: per questo la massa si conserva."},
+
+{c:3,q:"Completa e bilancia: CH₄ + … O₂ → CO₂ + 2 H₂O. Qual è il coefficiente davanti a O₂?",
+ o:["1","1,5","2","4"],
+ a:2,e:"CH₄ + 2 O₂ → CO₂ + 2 H₂O: a destra ci sono 4 atomi di O, quindi servono 2 O₂."},
+
+{c:3,q:"Completa e bilancia: 2 H₂ + O₂ → … H₂O. Qual è il coefficiente davanti a H₂O?",
+ o:["1","1,5","2","4"],
+ a:2,e:"2 H₂ + O₂ → 2 H₂O: 4 atomi di H a sinistra, quindi 2 molecole d'acqua a destra."},
+
+{c:3,q:"Completa e bilancia: N₂ + 3 H₂ → … NH₃. Qual è il coefficiente davanti a NH₃?",
+ o:["1","2","3","6"],
+ a:1,e:"N₂ + 3 H₂ → 2 NH₃: 2 N e 6 H a sinistra → 2 molecole di NH₃."},
+
+{c:3,q:"Completa e bilancia: 4 Fe + 3 O₂ → … Fe₂O₃. Qual è il coefficiente davanti a Fe₂O₃?",
+ o:["1","2","3","4"],
+ a:1,e:"4 Fe + 3 O₂ → 2 Fe₂O₃: 4 atomi di Fe richiedono 2 formule di Fe₂O₃."},
+
+{c:3,q:"Completa e bilancia: 2 C + O₂ → … CO. Qual è il coefficiente davanti a CO?",
+ o:["1","2","4","8"],
+ a:1,e:"2 C + O₂ → 2 CO: i 2 atomi di C e i 2 di O formano 2 molecole di CO."},
+
+{c:3,q:"Se 63,5 g di Cu reagiscono con 32 g di S (rapporto 2 : 1) quanto CuS si ottiene?",
+ o:["32 g","63,5 g","95,5 g","28,5 g"],
+ a:2,e:"Per Lavoisier la massa si conserva: 63,5 + 32 = 95,5 g di solfuro di rame."},
+
+{c:3,q:"Cosa si intende per «reagente in eccesso»?",
+ o:["il reagente che si esaurisce per primo","il reagente che resta parzialmente non reagito","il prodotto principale","il reagente con la massa maggiore"],
+ a:1,e:"Dopo la reazione, il reagente in eccesso resta in parte inalterato; quello limitante si esaurisce."},
+
+{c:3,q:"In una reazione, il «reagente limitante» è:",
+ o:["quello in eccesso","quello che si esaurisce per primo e determina la quantità di prodotto","quello con la concentrazione maggiore","il catalizzatore"],
+ a:1,e:"Il reagente limitante finisce per primo e limita la quantità di prodotto formata."},
+
+{c:3,q:"In una reazione chimica la massa totale dei prodotti è:",
+ o:["maggiore di quella dei reagenti","minore di quella dei reagenti","uguale a quella dei reagenti che hanno reagito","doppia rispetto a quella dei reagenti"],
+ a:2,e:"Legge di Lavoisier: massa reagenti = massa prodotti."},
+
+{c:3,q:"Il carbonio forma due composti con l'ossigeno: CO e CO₂. Con 12 g di C si combinano 16 g di O (in CO) e 32 g di O (in CO₂). Il rapporto tra le masse di ossigeno è 1 : 2. Quale legge si applica?",
+ o:["conservazione della massa di Lavoisier","proporzioni definite di Proust","proporzioni multiple di Dalton","legge dei volumi di Gay-Lussac"],
+ a:2,e:"Due elementi formano più composti con rapporti di masse 1 : 2 (numeri interi piccoli): legge di Dalton."},
+
+{c:3,q:"Nelle equazioni chimiche i simboli (g), (l), (s) accanto alle formule indicano:",
+ o:["la carica degli ioni","lo stato di aggregazione (gas, liquido, solido)","la massa della sostanza","il numero di molecole"],
+ a:1,e:"(g) gassoso, (l) liquido, (s) solido: ci dicono in quale stato la sostanza partecipa alla reazione."},
+
+{c:3,q:"La reazione CO₂ + H₂O → H₂CO₃ è una reazione di:",
+ o:["decomposizione","combinazione (sintesi)","sostituzione","neutralizzazione"],
+ a:1,e:"Due sostanze si combinano per darne una sola: è una combinazione."},
+
+{c:3,q:"La reazione 2 H₂O → 2 H₂ + O₂ è una reazione di:",
+ o:["combinazione","decomposizione","sostituzione","combustione"],
+ a:1,e:"Una sostanza si scompone in due: è una decomposizione (quella dell'acqua)."},
+
+{c:3,q:"Nella combustione del metano CH₄ + 2 O₂ → CO₂ + 2 H₂O, i prodotti sono:",
+ o:["CH₄ e O₂","CO₂ e H₂O","CO₂ e H₂","O₂ e H₂O"],
+ a:1,e:"I prodotti stanno a destra della freccia: anidride carbonica e acqua."},
+
+{c:3,q:"In un'equazione chimica bilanciata:",
+ o:["il numero di atomi di ogni elemento è uguale a sinistra e a destra","i reagenti e i prodotti sono sempre uguali","la massa totale cambia","i coefficienti devono essere tutti uguali"],
+ a:0,e:"Bilanciare significa uguagliare il numero di atomi di ogni elemento tra reagenti e prodotti."},
+
+{c:3,q:"Se il coefficiente stechiometrico di una sostanza è 1:",
+ o:["si scrive sempre 1","non si scrive (si omette)","si raddoppia la formula","non può esistere"],
+ a:1,e:"Per convenzione il coefficiente 1 non viene scritto."},
+
+{c:3,q:"Nella combustione del metano CH₄ + 2 O₂ → CO₂ + 2 H₂O, il rapporto tra le molecole di metano e di ossigeno che reagiscono è:",
+ o:["1 : 1","1 : 2","2 : 1","1 : 3"],
+ a:1,e:"I coefficienti stechiometrici ci dicono che 1 molecola di CH₄ reagisce con 2 molecole di O₂: rapporto 1 : 2."},
+
+/* ---------------- CAPITOLO 4 — VELOCITÀ ED EQUILIBRIO ---------------- */
+{c:4,q:"La velocità di una reazione chimica dipende da:",
+ o:["solo dalla temperatura","natura dei reagenti, concentrazione, temperatura, eventuale catalizzatore","solo dal colore dei reagenti","solo dalla pressione"],
+ a:1,e:"I quattro fattori: natura dei reagenti, concentrazione, temperatura e presenza di un catalizzatore."},
+
+{c:4,q:"Cosa si intende per «velocità di reazione»?",
+ o:["la variazione di massa (o concentrazione) di un reagente o prodotto nell'unità di tempo","la massa totale dei reagenti","il tempo impiegato per mescolare le sostanze","l'energia liberata"],
+ a:0,e:"Velocità = variazione della quantità di sostanza / intervallo di tempo in cui avviene."},
+
+{c:4,q:"Che cos'è un catalizzatore?",
+ o:["una sostanza consumata nella reazione","una sostanza che accelera la reazione senza essere consumata","il prodotto principale","un reagente limitante"],
+ a:1,e:"Il catalizzatore abbatte l'energia di attivazione e viene rigenerato a fine reazione."},
+
+{c:4,q:"Cosa sono gli enzimi?",
+ o:["acidi organici","catalizzatori biologici","sali minerali","proteine denaturate"],
+ a:1,e:"Gli enzimi sono catalizzatori biologici: accelerano le reazioni all'interno degli organismi viventi."},
+
+{c:4,q:"Cosa succede aumentando la temperatura di una reazione?",
+ o:["la velocità diminuisce","la velocità aumenta","la velocità non cambia","la reazione si inverte"],
+ a:1,e:"A T più alta le molecole si muovono di più e gli urti efficaci sono più frequenti: la reazione accelera."},
+
+{c:4,q:"Cosa succede aumentando la concentrazione dei reagenti?",
+ o:["la velocità diminuisce","la velocità aumenta","la velocità non cambia","l'equilibrio si sposta a sinistra"],
+ a:1,e:"Più particelle per unità di volume → più urti → più urti efficaci → reazione più veloce."},
+
+{c:4,q:"Cosa significa «energia di attivazione»?",
+ o:["l'energia liberata dalla reazione","l'energia minima necessaria perché la reazione avvenga","la temperatura iniziale della reazione","la massa dei reagenti"],
+ a:1,e:"È l'energia «soglia» che le molecole devono avere nell'urto per reagire."},
+
+{c:4,q:"Affinché un urto tra molecole sia «efficace», le molecole devono urtarsi con:",
+ o:["qualsiasi energia e orientamento","energia sufficiente e giusta orientazione","bassa energia","qualsiasi orientamento"],
+ a:1,e:"Occorrono energia sufficiente (≥ energia di attivazione) e la giusta orientazione nello spazio."},
+
+{c:4,q:"In generale, ogni aumento di 10 °C della temperatura fa in modo che la velocità di reazione:",
+ o:["si dimezzi","raddoppi circa","aumentare di 10 volte","diventi zero"],
+ a:1,e:"Come regola approssimata, +10 °C ≈ velocità raddoppiata."},
+
+{c:4,q:"Che cos'è una reazione reversibile?",
+ o:["una reazione che avviene una sola volta","una reazione i cui prodotti possono ricombinarsi per dare i reagenti","una reazione senza catalizzatore","una reazione esplosiva"],
+ a:1,e:"Nei sistemi reversibili diretta e inversa avvengono contemporaneamente: si indica con la doppia freccia ⇌."},
+
+{c:4,q:"Con quale simbolo si indica una reazione reversibile?",
+ o:["la freccia singola (→)","la doppia freccia (⇌)","il segno di uguale (=)","la doppia freccia doppia (⇐⇒)"],
+ a:1,e:"La doppia freccia ⇌ indica che la reazione procede in entrambi i sensi."},
+
+{c:4,q:"Cosa si intende per «stato di equilibrio» chimico?",
+ o:["la reazione si è completamente fermata","la velocità della reazione diretta è uguale a quella della reazione inversa","tutti i reagenti sono finiti","le concentrazioni di reagenti e prodotti sono uguali"],
+ a:1,e:"A equilibrio le due reazioni avvengono ancora (equilibrio dinamico) ma con la stessa velocità."},
+
+{c:4,q:"Quando un sistema è a equilibrio chimico, le concentrazioni di reagenti e prodotti:",
+ o:["variano continuamente","restano costanti nel tempo","diventano tutte zero","sono uguali tra loro"],
+ a:1,e:"A equilibrio macroscopico le concentrazioni non variano più, anche se a livello microscopico le reazioni continuano."},
+
+{c:4,q:"L'equilibrio chimico è:",
+ o:["statico","dinamico","impossibile da raggiungere","sempre a favore dei prodotti"],
+ a:1,e:"È dinamico: diretta e inversa avvengono simultaneamente alla stessa velocità."},
+
+{c:4,q:"Qual è il principio di Le Châtelier?",
+ o:["la massa dei reagenti è sempre maggiore di quella dei prodotti","un sistema a equilibrio, se perturbato, reagisce in modo da contrastare la perturbazione","le reazioni esotermiche sono sempre più veloci","i catalizzatori spostano l'equilibrio a destra"],
+ a:1,e:"Se si modifica una condizione (concentrazione, T, P), il sistema si adegua per «contrastare» il cambiamento."},
+
+{c:4,q:"Per l'equilibrio N₂ + 3 H₂ ⇌ 2 NH₃ (reazione esotermica), se si aumenta la pressione l'equilibrio si sposta:",
+ o:["a sinistra (verso i reagenti)","a destra (verso i prodotti)","non si sposta","dipende dalla temperatura"],
+ a:1,e:"A destra ci sono 2 moli di gas contro 4 a sinistra: la pressione alta favorisce il lato con meno moli."},
+
+{c:4,q:"Per l'equilibrio N₂ + 3 H₂ ⇌ 2 NH₃ (reazione esotermica), se si aumenta la temperatura l'equilibrio si sposta:",
+ o:["a destra","a sinistra (verso i reagenti)","non si sposta","dipende dalla pressione"],
+ a:1,e:"La reazione è esotermica (libera calore): il calore è «prodotto». Riscaldare sposta l'equilibrio verso i reagenti."},
+
+{c:4,q:"Nell'equilibrio N₂ + 3 H₂ ⇌ 2 NH₃, se si aggiunge N₂, l'equilibrio si sposta:",
+ o:["a sinistra","a destra (consumando l'azoto in eccesso)","non si sposta","a sinistra e a destra insieme"],
+ a:1,e:"Il sistema contrasta l'aumento di N₂ consumandolo: la reazione si sposta verso i prodotti."},
+
+{c:4,q:"Nell'equilibrio N₂ + 3 H₂ ⇌ 2 NH₃, se si rimuove NH₃, l'equilibrio si sposta:",
+ o:["a sinistra","a destra (per produrre più ammoniaca)","non si sposta","dipende dalla temperatura"],
+ a:1,e:"Il sistema contrasta la rimozione producendo altro NH₃: spostamento a destra."},
+
+{c:4,q:"Nel processo Haber-Bosch (N₂ + 3 H₂ ⇌ 2 NH₃) quale sostanza funziona da catalizzatore?",
+ o:["l'ossigeno","gli ossidi di ferro","l'acqua","il nichel"],
+ a:1,e:"L'industria usa ossidi di ferro come catalizzatore per produrre ammoniaca in modo economico."},
+
+{c:4,q:"La formazione delle stalattiti nelle grotte è un esempio di:",
+ o:["reazione velocissima","reazione molto lenta","reazione esplosiva","reazione irreversibile"],
+ a:1,e:"La trasformazione del bicarbonato di calcio in carbonato di calcio richiede anni: è una reazione lentissima."},
+
+{c:4,q:"Un'esplosione (come quella del TNT) è un esempio di:",
+ o:["reazione lentissima","reazione velocissima","reazione esotermica","equilibrio chimico"],
+ a:1,e:"Le esplosioni sono reazioni che si concludono in frazioni di secondo."},
+
+{c:4,q:"Nell'acqua di piscina il cloro reagisce: Cl₂ + H₂O ⇌ HClO + HCl. Se l'acqua evapora (si toglie H₂O), l'equilibrio si sposta:",
+ o:["verso i prodotti","verso i reagenti (per riformare acqua)","non si sposta","dipende dalla temperatura"],
+ a:1,e:"Il sistema contrasta la perdita di acqua producendone altra: spostamento verso sinistra."},
+
+{c:4,q:"Il catalizzatore:",
+ o:["sposta l'equilibrio verso i prodotti","sposta l'equilibrio verso i reagenti","non sposta l'equilibrio: accelera solo il suo raggiungimento","sposta l'equilibrio in entrambi i sensi"],
+ a:2,e:"Il catalizzatore accelera diretta e inversa allo stesso modo: l'equilibrio si raggiunge più in fretta ma nella stessa posizione."},
+
+{c:4,q:"A equilibrio chimico, la reazione diretta e quella inversa:",
+ o:["sono entrambe ferme","avvengono contemporaneamente alla stessa velocità","avvengono solo la diretta","avvengono con velocità diverse"],
+ a:1,e:"È l'equilibrio dinamico: le due reazioni procedono insieme, alla stessa velocità."}
+];
+
+/* =====================================================
+   LOGICA DEL QUIZ
+   ===================================================== */
+const N_QUESTIONS = 10;
+const $ = id => document.getElementById(id);
+const screens = { start: $("screen-start"), quiz: $("screen-quiz"), results: $("screen-results") };
+let state = {};
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function fmt(q) { return q.q.replace(/</g, "&lt;"); }
+function optHTML(t) { return t.replace(/</g, "&lt;"); }
+
+/* ---------- start screen ---------- */
+function buildChips() {
+  const box = $("chips");
+  box.innerHTML = "";
+  const all = document.createElement("button");
+  all.className = "chip active"; all.textContent = "Tutti i capitoli";
+  all.onclick = () => setFilter(0, all);
+  box.appendChild(all);
+  Object.entries(CHAPTERS).forEach(([n, name]) => {
+    const short = "Cap. " + n.split("·")[0].trim().replace("Cap. ", "");
+    const b = document.createElement("button");
+    b.className = "chip";
+    b.textContent = "Cap. " + short;
+    b.title = name;
+    b.onclick = () => setFilter(+n, b);
+    box.appendChild(b);
+  });
+}
+
+function setFilter(ch, btn) {
+  state.chapter = ch;
+  document.querySelectorAll("#chips .chip").forEach(c => c.classList.remove("active"));
+  btn.classList.add("active");
+}
+
+/* ---------- quiz ---------- */
+function startQuiz() {
+  const pool = state.chapter === 0 ? BANK : BANK.filter(q => q.c === state.chapter);
+  if (pool.length < N_QUESTIONS) {
+    alert("Domande disponibili: " + pool.length + " (ne servono " + N_QUESTIONS + ")");
+    return;
+  }
+  state.instant = $("cb-instant").checked;
+  state.qs = shuffle(pool).slice(0, N_QUESTIONS).map(q => {
+    const order = shuffle(q.o.map((_, i) => i));
+    return {
+      ...q,
+      o: order.map(i => q.o[i]),
+      a: order.indexOf(q.a),
+      user: null
+    };
+  });
+  state.i = 0;
+  showScreen("quiz");
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = state.qs[state.i];
+  const n = state.i + 1;
+  $("qcount").textContent = "Domanda " + n + " / " + N_QUESTIONS;
+  $("qchapter").textContent = CHAPTERS[q.c];
+  $("qtext").innerHTML = fmt(q);
+  $("pbar").style.width = ((state.i) / N_QUESTIONS * 100) + "%";
+
+  const box = $("qoptions");
+  box.innerHTML = "";
+  const letters = ["A", "B", "C", "D"];
+  q.o.forEach((opt, i) => {
+    const b = document.createElement("button");
+    b.className = "opt";
+    b.innerHTML = '<span class="letter">' + letters[i] + '</span><span>' + optHTML(opt) + '</span>';
+    b.onclick = () => answer(i, b);
+    box.appendChild(b);
+  });
+
+  const fb = $("qfeedback");
+  fb.className = "feedback";
+  fb.innerHTML = "";
+  $("btn-next").classList.add("hidden");
+}
+
+function answer(i, btn) {
+  const q = state.qs[state.i];
+  if (q.user !== null) return;
+  q.user = i;
+  const opts = document.querySelectorAll("#qoptions .opt");
+  opts.forEach((b, j) => {
+    b.disabled = true;
+    if (j === q.a) b.classList.add("correct");
+    else if (j === i && i !== q.a) b.classList.add("wrong");
+  });
+
+  const ok = i === q.a;
+  if (state.instant) {
+    const fb = $("qfeedback");
+    fb.classList.add("show", ok ? "ok" : "ko");
+    fb.innerHTML = '<strong class="tag">' + (ok ? "✅ Corretto!" : "❌ Sbagliato") + "</strong>"
+      + "Risposta corretta: <strong>" + optHTML(q.o[q.a]) + "</strong><br>"
+      + "<em>" + q.e + "</em>";
+  }
+
+  const next = $("btn-next");
+  next.classList.remove("hidden");
+  next.textContent = state.i === N_QUESTIONS - 1 ? "Vedi il risultato 🏁" : "Avanti →";
+}
+
+function nextQuestion() {
+  state.i++;
+  if (state.i >= N_QUESTIONS) showResults();
+  else renderQuestion();
+}
+
+/* ---------- results ---------- */
+function scoreMessage(v) {
+  if (v >= 9) return "Ottimo lavoro, eccellente! 🌟";
+  if (v >= 8) return "Molto bene! 💪";
+  if (v >= 7) return "Bene! Ancora un po' di ripasso e sarà perfetto.";
+  if (v >= 6) return "Sufficienza ottenuta: ripassa gli argomenti sbagliati.";
+  if (v >= 5) return "Ci sei quasi! Rivedi i capitoli evidenziati.";
+  if (v >= 4) return "Ripassiamo insieme: rileggi i capitoli e riprova.";
+  if (v >= 1) return "Niente panico: riparti dalle basi, un capitolo alla volta.";
+  return "Non mollare! Ripassa dal primo capitolo e riprova.";
+}
+
+function showResults() {
+  const correct = state.qs.filter(q => q.user === q.a).length;
+  const wrong = state.qs.filter(q => q.user !== q.a);
+  const vote = correct; // 1 punto per ogni risposta esatta → voto su 10
+
+  const box = $("scorebox");
+  box.className = "score-box " + (vote >= 7 ? "good" : vote >= 5 ? "mid" : "bad");
+  $("scorenum").textContent = vote;
+  $("scoremsg").textContent = scoreMessage(vote);
+  $("scorestats").textContent = correct + " risposte esatte · " + wrong.length + " da rivedere";
+
+  const review = $("review");
+  review.innerHTML = "";
+  if (wrong.length === 0) {
+    review.innerHTML = '<div class="all-ok">🎉 Perfetto! Nessuna domanda sbagliata in questa sessione!</div>';
+  } else {
+    wrong.forEach(q => {
+      const letters = ["A", "B", "C", "D"];
+      const div = document.createElement("div");
+      div.className = "review-item";
+      div.innerHTML =
+        '<span class="mini-badge">' + CHAPTERS[q.c] + "</span>" +
+        '<div class="rq">' + fmt(q) + "</div>" +
+        '<div class="your">La tua risposta: ' + optHTML(q.o[q.user]) + "</div>" +
+        '<div class="right">Risposta corretta: ' + optHTML(q.o[q.a]) + "</div>" +
+        '<div class="exp">📖 ' + q.e + "</div>";
+      review.appendChild(div);
+    });
+  }
+  showScreen("results");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+/* ---------- navigation ---------- */
+function showScreen(name) {
+  Object.values(screens).forEach(s => s.classList.add("hidden"));
+  screens[name].classList.remove("hidden");
+  window.scrollTo({ top: 0 });
+}
+
+/* ---------- init ---------- */
+buildChips();
+state.chapter = 0;
+$("btn-start").onclick = startQuiz;
+$("btn-next").onclick = nextQuestion;
+$("btn-retry").onclick = startQuiz;
+$("btn-home").onclick = () => showScreen("start");
+</script>
+</body>
+</html>

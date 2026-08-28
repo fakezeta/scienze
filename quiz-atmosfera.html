@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test interattivo — L'atmosfera</title>
+<style>
+  :root {
+    --blu: #1565c0;
+    --blu-scuro: #0d47a1;
+    --verde: #2e7d32;
+    --rosso: #c62828;
+    --grigio: #5f6368;
+    --bordo: #dadce0;
+    --sfondo: #f1f3f4;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    background: var(--sfondo);
+    color: #202124;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 24px 12px;
+  }
+  .card {
+    background: #fff;
+    width: 100%;
+    max-width: 760px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.12);
+    padding: 28px 32px;
+  }
+  h1 { font-size: 22px; margin-bottom: 4px; }
+  .sottotitolo { color: var(--grigio); font-size: 14px; margin-bottom: 18px; }
+
+  /* barra progresso */
+  .barra {
+    height: 8px;
+    background: #e8eaed;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 6px;
+  }
+  .barra > div {
+    height: 100%;
+    background: var(--blu);
+    width: 0%;
+    transition: width .3s;
+  }
+  .progresso-testo {
+    font-size: 13px;
+    color: var(--grigio);
+    margin-bottom: 18px;
+  }
+
+  /* categoria + domanda */
+  .categoria {
+    font-weight: 700;
+    font-size: 15px;
+    margin-bottom: 14px;
+    color: #202124;
+  }
+  .domanda {
+    font-size: 16px;
+    margin-bottom: 20px;
+    line-height: 1.4;
+  }
+
+  /* opzioni */
+  .opzioni { display: flex; flex-direction: column; gap: 12px; margin-bottom: 8px; }
+  .opzione { display: flex; align-items: center; gap: 12px; }
+  .opzione .lettera {
+    font-weight: 700;
+    width: 18px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .opzione label {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid var(--bordo);
+    border-radius: 8px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+    user-select: none;
+  }
+  .opzione label:hover { background: #f8f9fa; border-color: var(--blu); }
+  .opzione input[type=radio] {
+    width: 20px; height: 20px;
+    accent-color: var(--blu);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .opzione label.selezione { background: #e3f2fd; border-color: var(--blu); }
+
+  /* risultati: evidenziazione */
+  .opzione label.errore { background: #fdecea; border-color: var(--rosso); }
+  .opzione label.buongiusta { background: #e8f5e9; border-color: var(--verde); }
+  .badge-risultato {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 10px;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+  .badge-risultato.buona { background: #e8f5e9; color: var(--verde); }
+  .badge-risultato.cattiva { background: #fdecea; color: var(--rosso); }
+
+  /* pulsanti */
+  .azioni { display: flex; justify-content: space-between; margin-top: 22px; gap: 10px; }
+  button {
+    font-size: 15px;
+    font-weight: 600;
+    padding: 11px 26px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: opacity .15s;
+  }
+  button:hover { opacity: .88; }
+  button:disabled { opacity: .4; cursor: not-allowed; }
+  .btn-secondario { background: #e8eaed; color: #3c4043; }
+  .btn-primario { background: var(--blu); color: #fff; }
+  .btn-centro { display: flex; justify-content: center; margin-top: 24px; }
+  .btn-centro button { font-size: 17px; padding: 13px 40px; }
+
+  /* pagina iniziale */
+  .intro { text-align: center; padding: 12px 0; }
+  .intro p { color: var(--grigio); margin: 10px 0 24px; line-height: 1.5; }
+  .intro .info {
+    background: #e8f0fe;
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-size: 14px;
+    color: #174ea6;
+    margin-bottom: 24px;
+    line-height: 1.5;
+  }
+
+  /* pagina risultati */
+  .risultati-voto {
+    text-align: center;
+    padding: 18px 0 8px;
+    border-bottom: 1px solid var(--bordo);
+    margin-bottom: 20px;
+  }
+  .risultati-voto .voto {
+    font-size: 56px;
+    font-weight: 800;
+    line-height: 1;
+  }
+  .risultati-voto .voto.voto-buona { color: var(--verde); }
+  .risultati-voto .voto.voto-media { color: #f9a825; }
+  .risultati-voto .voto.voto-brutta { color: var(--rosso); }
+  .risultati-voto .dettaglio { color: var(--grigio); margin-top: 8px; font-size: 15px; }
+  .risultati-voto .commento { margin-top: 10px; font-size: 16px; font-weight: 600; }
+
+  .sez-titolo {
+    font-weight: 700;
+    font-size: 15px;
+    margin: 22px 0 10px;
+  }
+  .sez-titolo.errore-col { color: var(--rosso); }
+  .sez-titolo.buona-col { color: var(--verde); }
+  .mini-risultato {
+    border: 1px solid var(--bordo);
+    border-left: 5px solid var(--verde);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 10px;
+    font-size: 14px;
+    line-height: 1.45;
+  }
+  .mini-risultato.errore { border-left-color: var(--rosso); background: #fffafa; }
+  .mini-risultato .d { font-weight: 600; margin-bottom: 4px; }
+  .mini-risultato .tua { color: var(--rosso); }
+  .mini-risultato .giusta { color: var(--verde); font-weight: 600; }
+  .mini-risultato .cat { color: var(--grigio); font-size: 12px; }
+
+  .nascosto { display: none; }
+  @media (max-width: 560px) {
+    .card { padding: 20px 16px; }
+    .opzione label { padding: 10px 12px; font-size: 14px; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+
+  <!-- PAGINA INIZIALE -->
+  <div id="pagina-inizio">
+    <h1>📚 Test interattivo — L'atmosfera</h1>
+    <div class="sottotitolo">Unità 4 · Capitoli 2, 3, 5, 6, 7, 8, 9, 10 e 11</div>
+    <div class="intro">
+      <div class="info">
+        In ogni sessione vengono estratte a caso <strong>10 domande</strong> da una banca di 109.<br>
+        Rispondi a tutte e alla fine riceverai il <strong>voto in decimi</strong> e la
+        <strong>correzione delle domande sbagliate</strong>.
+      </div>
+      <div class="btn-centro">
+        <button class="btn-primario" onclick="avviaTest()">Inizia il test</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGINA DOMANDE -->
+  <div id="pagina-domanda" class="nascosto">
+    <div class="barra"><div id="barra-riempimento"></div></div>
+    <div class="progresso-testo" id="testo-progresso"></div>
+    <div class="categoria" id="dom-categoria"></div>
+    <div class="domanda" id="dom-testo"></div>
+    <div class="opzioni" id="dom-opzioni"></div>
+    <div class="azioni">
+      <button class="btn-secondario" id="btn-indietro" onclick="vaiIndietro()">← Indietro</button>
+      <button class="btn-primario" id="btn-avanti" onclick="vaiAvanti()">Avanti →</button>
+    </div>
+  </div>
+
+  <!-- PAGINA RISULTATI -->
+  <div id="pagina-risultati" class="nascosto">
+    <div class="risultati-voto">
+      <div class="voto" id="ris-voto"></div>
+      <div class="dettaglio" id="ris-dettaglio"></div>
+      <div class="commento" id="ris-commento"></div>
+    </div>
+    <div class="sez-titolo errore-col">❌ Domande errate</div>
+    <div id="ris-errate"></div>
+    <div class="sez-titolo buona-col">✅ Domande corrette</div>
+    <div id="ris-corrette"></div>
+    <div class="btn-centro">
+      <button class="btn-primario" onclick="riavvia()">🔄 Nuova sessione (altre 10 domande)</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const BANCHE = [
+// ---------------- CAP. 2 — Che cos'è l'atmosfera ----------------
+{c:"Cap. 2 — Che cos'è l'atmosfera", q:"Che percentuale dell'atmosfera è formata da azoto?", a:["21%","78%","0,93%","0,04%"], s:1},
+{c:"Cap. 2 — Che cos'è l'atmosfera", q:"Quale percentuale dell'aria è formata da ossigeno?", a:["78%","21%","0,04%","0,93%"], s:1},
+{c:"Cap. 2 — Che cos'è l'atmosfera", q:"Quale percentuale dell'atmosfera è occupata dall'anidride carbonica?", a:["0,04%","0,93%","0,3%","21%"], s:0},
+{c:"Cap. 2 — Che cos'è l'atmosfera", q:"La composizione dell'aria (azoto, ossigeno, altri gas) rimane costante fino a quale quota?", a:["circa 100 km","circa 17 km","circa 50 km","circa 1000 km"], s:0},
+{c:"Cap. 2 — Che cos'è l'atmosfera", q:"Il vapore acqueo presente nell'aria proviene in gran parte da…", a:["l'evaporazione dell'acqua di oceani e mari","la fotosintesi delle piante","la combustione dei combustibili fossili","l'attività dei vulcani"], s:0},
+{c:"Cap. 2 — Che cos'è l'atmosfera", q:"Quale strato dell'atmosfera contiene lo strato di ozono?", a:["Troposfera","Mesosfera","Stratosfera","Esosfera"], s:2},
+{c:"Cap. 2 — Che cos'è l'atmosfera", q:"Nella troposfera la temperatura diminuisce di circa…", a:["0,6 °C ogni 100 m","1 °C ogni 100 m","0,6 °C ogni 10 m","3 °C ogni 100 m"], s:0},
+{c:"Cap. 2 — Che cos'è l'atmosfera", q:"Che cosa sono le polveri sottili PM₂,₅?", a:["particelle con diametro inferiore a 2,5 micrometri","gas emessi da veicoli e caldaie","particelle con diametro inferiore a 25 micrometri","gas contenuti nello strato di ozono"], s:0},
+{c:"Cap. 2 — Che cos'è l'atmosfera", q:"Quale tra i seguenti strati dell'atmosfera può essere anche chiamato ionosfera?", a:["Mesosfera","Stratosfera","Troposfera","Termosfera"], s:3},
+{c:"Cap. 2 — Che cos'è l'atmosfera", q:"Quali sostanze sono la causa principale del «buco» dell'ozonosfera?", a:["i CFC (clorofluorocarburi)","le polveri sottili","l'anidride solforosa","l'anidride carbonica"], s:0},
+{c:"Cap. 2 — Che cos'è l'atmosfera", q:"Il Protocollo di Montréal (1989) riguarda…", a:["il bando dei CFC","il divieto di emissioni di CO₂","il bando dei pesticidi in agricoltura","il divieto di pesca nel Mediterraneo"], s:0},
+{c:"Cap. 2 — Che cos'è l'atmosfera", q:"Che cosa assorbe lo strato di ozono?", a:["le radiazioni ultraviolette del Sole","la luce visibile","i raggi infrarossi emessi dal suolo","le onde radio"], s:0},
+{c:"Cap. 2 — Che cos'è l'atmosfera", q:"In quale strato avvengono i principali fenomeni meteorologici?", a:["Esosfera","Troposfera","Termosfera","Mesosfera"], s:1},
+{c:"Cap. 2 — Che cos'è l'atmosfera", q:"Nella mesosfera…", a:["i gas diventano molto rari e aumenta il numero di particelle cariche","la temperatura aumenta rapidamente","si trova lo strato di ozono","avvengono i temporali"], s:0},
+// ---------------- CAP. 3 — Il riscaldamento dell'atmosfera ----------------
+{c:"Cap. 3 — Il riscaldamento dell'atmosfera", q:"Circa quale frazione della radiazione solare viene riflessa dall'atmosfera nello spazio?", a:["1/3","1/10","2/3","1/2"], s:0},
+{c:"Cap. 3 — Il riscaldamento dell'atmosfera", q:"Senza l'effetto serra la temperatura media della Terra sarebbe di circa…", a:["−18 °C","+15 °C","0 °C","+25 °C"], s:0},
+{c:"Cap. 3 — Il riscaldamento dell'atmosfera", q:"Quale è la temperatura media attuale della Terra, grazie all'effetto serra?", a:["circa 15 °C","circa 30 °C","circa 5 °C","circa 40 °C"], s:0},
+{c:"Cap. 3 — Il riscaldamento dell'atmosfera", q:"Quale dei seguenti è un gas serra?", a:["il metano","l'azoto","l'argon","l'elio"], s:0},
+{c:"Cap. 3 — Il riscaldamento dell'atmosfera", q:"Quale gas serra, prodotto in grande quantità dalle attività umane, è aumentato di più negli ultimi decenni?", a:["l'anidride carbonica","l'ossigeno","l'azoto","l'argon"], s:0},
+{c:"Cap. 3 — Il riscaldamento dell'atmosfera", q:"Con l'aumentare dell'altitudine, in troposfera, la temperatura…", a:["diminuisce","aumenta","resta costante","prima aumenta poi diminuisce"], s:0},
+{c:"Cap. 3 — Il riscaldamento dell'atmosfera", q:"All'Equatore la temperatura media è di circa 26 °C più alta che…", a:["ai poli","nelle città","in montagna","d'estate"], s:0},
+{c:"Cap. 3 — Il riscaldamento dell'atmosfera", q:"Che cosa si intende per escursione termica giornaliera?", a:["la differenza tra temperatura massima e minima dello stesso giorno","la media delle temperature di un giorno","la differenza tra la temperatura dell'aria e quella dell'acqua","la temperatura massima registrata in un anno"], s:0},
+{c:"Cap. 3 — Il riscaldamento dell'atmosfera", q:"L'escursione termica è più ridotta…", a:["sulle coste (clima marittimo)","nei deserti","nelle pianure interne","in montagna"], s:0},
+{c:"Cap. 3 — Il riscaldamento dell'atmosfera", q:"Le famose curve dell'aumento della CO₂ atmosferica sono state misurate dall'Osservatorio di…", a:["Mauna Loa (Hawaii)","Ginevra","Greenwich (Londra)","Arecibo (Porto Rico)"], s:0},
+{c:"Cap. 3 — Il riscaldamento dell'atmosfera", q:"La copertura vegetale influenza la temperatura perché le piante…", a:["assorbono radiazione solare e rimuovono CO₂","riscaldano l'aria di notte","aumentano l'umidità relativa in modo permanente","riflettono tutta la luce solare"], s:0},
+// ---------------- CAP. 5 — La pressione atmosferica e i venti ----------------
+{c:"Cap. 5 — Pressione e venti", q:"Chi per primo misurò la pressione atmosferica nel 1643?", a:["Evangelista Torricelli","Galileo Galilei","Isaac Newton","James Clerk Maxwell"], s:0},
+{c:"Cap. 5 — Pressione e venti", q:"Che sostanza usò Torricelli per il suo esperimento?", a:["il mercurio","l'acqua","l'olio","l'alcol"], s:0},
+{c:"Cap. 5 — Pressione e venti", q:"La pressione atmosferica normale, a livello del mare, è di…", a:["760 mmHg","100 mmHg","1013 mmHg","76 mmHg"], s:0},
+{c:"Cap. 5 — Pressione e venti", q:"1 atmosfera (atm) corrisponde a…", a:["circa 1013 millibar","circa 500 millibar","circa 100 millibar","circa 10 millibar"], s:0},
+{c:"Cap. 5 — Pressione e venti", q:"Quale unità di misura, usata in meteorologia, corrisponde a 100 pascal?", a:["il millibar (mb)","l'atmosfera (atm)","il centimetro di mercurio","il decibar"], s:0},
+{c:"Cap. 5 — Pressione e venti", q:"Al crescere dell'altitudine la pressione atmosferica…", a:["diminuisce","aumenta","resta costante","aumenta fino a 10 km poi diminuisce"], s:0},
+{c:"Cap. 5 — Pressione e venti", q:"A parità di condizioni, la pressione dell'aria umida è minore di quella dell'aria secca perché…", a:["le molecole d'acqua sono più leggere di quelle di azoto e ossigeno","l'aria umida è sempre più calda","l'umidità riflette i raggi solari","l'acqua evapora"], s:0},
+{c:"Cap. 5 — Pressione e venti", q:"Le isobare sono…", a:["linee che uniscono punti con la stessa pressione","linee che uniscono punti con la stessa temperatura","linee che uniscono punti con la stessa altitudine","linee che indicano la direzione del vento"], s:0},
+{c:"Cap. 5 — Pressione e venti", q:"Un anticiclone è un'area di…", a:["alta pressione","bassa pressione","temperatura molto elevata","umidità minima"], s:0},
+{c:"Cap. 5 — Pressione e venti", q:"In un anticiclone l'aria…", a:["scende e di solito porta bel tempo","sale e porta piogge","resta completamente ferma","soffia sempre da est"], s:0},
+{c:"Cap. 5 — Pressione e venti", q:"I venti soffiano in genere…", a:["dalle aree di alta pressione verso quelle di bassa","dalle aree di bassa pressione verso quelle di alta","in direzione delle isobare","sempre da ovest verso est"], s:0},
+{c:"Cap. 5 — Pressione e venti", q:"La deviazione della direzione dei venti è dovuta a…", a:["la forza di Coriolis (rotazione terrestre)","la gravità terrestre","l'effetto serra","la gravità lunare"], s:0},
+{c:"Cap. 5 — Pressione e venti", q:"Nell'emisfero nord, i venti che escono da un anticiclone ruotano in senso…", a:["orario","antiorario","verticale","alternato"], s:0},
+// ---------------- CAP. 6 — La circolazione generale ----------------
+{c:"Cap. 6 — Circolazione generale", q:"Gli alisei sono…", a:["venti costanti che spirano verso l'Equatore","venti che spirano dai poli","venti che cambiano direzione con le stagioni","correnti a getto in alta troposfera"], s:0},
+{c:"Cap. 6 — Circolazione generale", q:"Gli alisei spirano da…", a:["est verso ovest","ovest verso est","sud verso nord","nord verso sud"], s:0},
+{c:"Cap. 6 — Circolazione generale", q:"I venti occidentali spirano…", a:["da ovest verso est","da est verso ovest","dall'alto verso il basso","sempre verso i poli"], s:0},
+{c:"Cap. 6 — Circolazione generale", q:"I monsoni sono…", a:["venti che invertono la direzione con le stagioni","venti polari molto freddi","correnti a getto","brezze di mare"], s:0},
+{c:"Cap. 6 — Circolazione generale", q:"In estate, in Asia, il monsone soffia…", a:["dal mare verso la terra (portatore di piogge)","dalla terra verso il mare (secco)","da est verso ovest","da sud verso nord"], s:0},
+{c:"Cap. 6 — Circolazione generale", q:"Le correnti a getto sono…", a:["forti flussi d'aria in alta troposfera","forti flussi d'aria nella stratosfera","correnti oceaniche","venti di bassa quota"], s:0},
+{c:"Cap. 6 — Circolazione generale", q:"Le correnti a getto possono raggiungere velocità fino a…", a:["500 km/h","50 km/h","5000 km/h","150 km/h"], s:0},
+{c:"Cap. 6 — Circolazione generale", q:"La brezza di mare è…", a:["un vento diurno che soffia dal mare verso la terra","un vento notturno dalla terra verso il mare","un vento che soffia solo d'inverno","una corrente a getto"], s:0},
+{c:"Cap. 6 — Circolazione generale", q:"La brezza di terra soffia…", a:["di notte, dalla terra verso il mare","di giorno, dal mare verso la terra","sempre da ovest","solo nelle zone polari"], s:0},
+{c:"Cap. 6 — Circolazione generale", q:"Le celle di Hadley si trovano…", a:["tra l'Equatore e i tropici (circa 30°)","tra i 30° e i 60° di latitudine","solo sopra l'Oceano Atlantico","tra i 60° e i poli"], s:0},
+{c:"Cap. 6 — Circolazione generale", q:"L'energia eolica viene sfruttata per…", a:["la produzione di elettricità (aerogeneratori)","riscaldare le città d'inverno","produrre cemento","illuminare i fondali marini"], s:0},
+// ---------------- CAP. 7 — Umidità e precipitazioni ----------------
+{c:"Cap. 7 — Umidità e precipitazioni", q:"Le nuvole alte (oltre 6.000 m), come i cirri, sono formate da…", a:["aghi di ghiaccio","goccioline d'acqua liquide","sabbia e polvere","vapore acqueo libero"], s:0},
+{c:"Cap. 7 — Umidità e precipitazioni", q:"Quali nuvole producono le precipitazioni più intense (temporali e grandine)?", a:["i cumulonembi","i cirri","i cirrostrati","gli strati"], s:0},
+{c:"Cap. 7 — Umidità e precipitazioni", q:"L'umidità assoluta è…", a:["la quantità di vapore acqueo (in g/m³) contenuta nell'aria","la percentuale di vapore rispetto al massimo","la quantità di pioggia caduta in un giorno","la temperatura alla quale condensa il vapore"], s:0},
+{c:"Cap. 7 — Umidità e precipitazioni", q:"L'umidità relativa è…", a:["il rapporto, in %, tra umidità assoluta e massima possibile","la quantità di pioggia attesa","il punto di rugiada","la velocità del vento"], s:0},
+{c:"Cap. 7 — Umidità e precipitazioni", q:"Il punto di rugiada è…", a:["la temperatura alla quale l'aria satura e il vapore condensa","la temperatura massima dell'anno","la quota in cui si formano i fulmini","la temperatura del suolo"], s:0},
+{c:"Cap. 7 — Umidità e precipitazioni", q:"Se l'aria si raffredda sotto il punto di rugiada…", a:["il vapore acqueo condensa formando nuvole o rugiada","il vapore evapora più velocemente","l'aria si scalda spontaneamente","non succede nulla"], s:0},
+{c:"Cap. 7 — Umidità e precipitazioni", q:"I nuclei di condensa sono…", a:["piccole particelle (sale, pollini) attorno alle quali il vapore condensa","gocce di pioggia già cadute","cristalli di sale marino fuso","particelle di sabbia trasportate dal vento"], s:0},
+{c:"Cap. 7 — Umidità e precipitazioni", q:"Le piogge acide contengono principalmente…", a:["acido solforico e acido nitrico","aceto e bicarbonato","acqua di mare","acido cloridrico e acido solforico"], s:0},
+{c:"Cap. 7 — Umidità e precipitazioni", q:"Quali gas inquinanti sono i responsabili principali delle piogge acide?", a:["anidride solforosa (SO₂) e ossidi di azoto (NOₓ)","ossigeno e azoto","metano e idrogeno","anidride carbonica e vapore acqueo"], s:0},
+{c:"Cap. 7 — Umidità e precipitazioni", q:"Le precipitazioni si misurano in…", a:["millimetri (mm)","chilometri (km)","pascal (Pa)","gradi Celsius (°C)"], s:0},
+{c:"Cap. 7 — Umidità e precipitazioni", q:"Le isoiete sono…", a:["linee che uniscono luoghi con la stessa quantità di precipitazioni","linee che uniscono luoghi con la stessa pressione","linee che uniscono luoghi con la stessa temperatura","le linee di costa dei mari"], s:0},
+{c:"Cap. 7 — Umidità e precipitazioni", q:"Dove si registrano in media le precipitazioni più abbondanti?", a:["nelle zone tropicali","nei deserti subtropicali","nelle zone polari","nelle zone temperate"], s:0},
+{c:"Cap. 7 — Umidità e precipitazioni", q:"I cumuli sono nuvole con la tipica forma a…", a:["torre o cavolfiore","velo sottile","fili sottili","banchi uniformi"], s:0},
+// ---------------- CAP. 8 — Le perturbazioni atmosferiche ----------------
+{c:"Cap. 8 — Perturbazioni atmosferiche", q:"Le condizioni anticloniche (alta pressione) sono associate di solito a…", a:["bel tempo","piogge intense","tempeste di neve","tornado"], s:0},
+{c:"Cap. 8 — Perturbazioni atmosferiche", q:"I cicloni extratropicali sono perturbazioni tipiche…", a:["delle medie latitudini","delle zone tropicali","delle zone polari","dei deserti"], s:0},
+{c:"Cap. 8 — Perturbazioni atmosferiche", q:"I cicloni extratropicali possono avere un diametro fino a…", a:["3000 km","3 km","30 km","300 km"], s:0},
+{c:"Cap. 8 — Perturbazioni atmosferiche", q:"Un fronte è…", a:["la superficie di contatto tra due masse d'aria diverse","una linea di costa","una corrente a getto","un tipo di nuvola alta"], s:0},
+{c:"Cap. 8 — Perturbazioni atmosferiche", q:"Al passaggio di un fronte freddo si formano soprattutto…", a:["nubi cumulonembi e precipitazioni intense e temporalesche","nubi stratiformi e piogge leggere","cielo sereno e bel tempo","solo nebbie mattutine"], s:0},
+{c:"Cap. 8 — Perturbazioni atmosferiche", q:"Al passaggio di un fronte caldo le precipitazioni sono di solito…", a:["leggere e persistenti","intense e brevi","assenti","solo grandine"], s:0},
+{c:"Cap. 8 — Perturbazioni atmosferiche", q:"Un fronte occluso si forma quando…", a:["il fronte freddo raggiunge e supera il fronte caldo","il Sole sorge sul mare","le isobare si diradano","la pressione diventa massima"], s:0},
+{c:"Cap. 8 — Perturbazioni atmosferiche", q:"I cicloni tropicali si formano su…", a:["mari molto caldi (acqua sopra i 26 °C)","mari gelidi","deserti","catene montuose"], s:0},
+{c:"Cap. 8 — Perturbazioni atmosferiche", q:"L'«occhio del ciclone» è…", a:["il centro del vortice, dove l'aria scende e il cielo è sereno","la periferia dove i venti sono massimi","la nube di pioggia più esterna","la zona di grandine"], s:0},
+{c:"Cap. 8 — Perturbazioni atmosferiche", q:"I cicloni tropicali nell'Oceano Atlantico sono chiamati…", a:["uragani","terremoti","monsoni","valanghe"], s:0},
+{c:"Cap. 8 — Perturbazioni atmosferiche", q:"Il diametro di un ciclone tropicale è compreso tra…", a:["600 e 1000 km","6 e 10 km","60 e 100 km","6000 e 10.000 km"], s:0},
+{c:"Cap. 8 — Perturbazioni atmosferiche", q:"Un tornado è…", a:["un vortice a forma di imbuto che da una nube temporalesca raggiunge il suolo","un'onda anomala del mare","una nube alta e sottile","un tipo di anticiclone"], s:0},
+{c:"Cap. 8 — Perturbazioni atmosferiche", q:"La velocità del vento all'interno di un tornado può superare…", a:["500 km/h","50 km/h","5000 km/h","150 km/h"], s:0},
+// ---------------- CAP. 9 — Le previsioni del tempo ----------------
+{c:"Cap. 9 — Le previsioni del tempo", q:"Il termometro serve a misurare…", a:["la temperatura dell'aria","la pressione","l'umidità","la velocità del vento"], s:0},
+{c:"Cap. 9 — Le previsioni del tempo", q:"Il barometro serve a misurare…", a:["la pressione atmosferica","la temperatura","la pioggia","la direzione del vento"], s:0},
+{c:"Cap. 9 — Le previsioni del tempo", q:"L'anemometro misura…", a:["la velocità del vento","la direzione del vento","la temperatura del suolo","la quantità di nuvole"], s:0},
+{c:"Cap. 9 — Le previsioni del tempo", q:"L'anemoscopio determina…", a:["la direzione del vento","la velocità del vento","l'umidità assoluta","la pressione in quota"], s:0},
+{c:"Cap. 9 — Le previsioni del tempo", q:"L'igrometro misura…", a:["l'umidità relativa dell'aria","la pioggia caduta","la pressione","la temperatura del mare"], s:0},
+{c:"Cap. 9 — Le previsioni del tempo", q:"Il pluviometro misura…", a:["le precipitazioni (in mm)","il vento","la temperatura notturna","la pressione in quota"], s:0},
+{c:"Cap. 9 — Le previsioni del tempo", q:"Un pallone sonda è…", a:["un pallone con strumenti che sale in atmosfera per misurare i dati in quota","un satellite di piccolo raggio","una sonda che misura la salinità del mare","una bomba meteorologica"], s:0},
+{c:"Cap. 9 — Le previsioni del tempo", q:"Le carte sinottiche sono…", a:["carte che mostrano isobare, fronti e simboli meteo in un dato istante","carte che mostrano i confini dei paesi","carte dei fondali marini","carte della vegetazione"], s:0},
+{c:"Cap. 9 — Le previsioni del tempo", q:"L'affidabilità delle previsioni del tempo entro le 24 ore è di circa…", a:["90–95%","50%","10%","100% garantita"], s:0},
+{c:"Cap. 9 — Le previsioni del tempo", q:"L'organizzazione che coordina le stazioni meteorologiche nel mondo è…", a:["l'Organizzazione Meteorologica Mondiale (OMM)","la NASA","l'Unione Europea dello Spazio","l'Organizzazione Mondiale della Sanità"], s:0},
+{c:"Cap. 9 — Le previsioni del tempo", q:"I satelliti meteorologici forniscono…", a:["immagini dei sistemi nuvolosi e delle perturbazioni","la salinità dei mari","la temperatura dei fondali","le mappe dei vulcani attivi"], s:0},
+{c:"Cap. 9 — Le previsioni del tempo", q:"Dopo tre giorni, l'attendibilità delle previsioni scende a circa…", a:["60–70%","95%","10%","50%"], s:0},
+// ---------------- CAP. 10 — La degradazione meteorica delle rocce ----------------
+{c:"Cap. 10 — Degradazione delle rocce", q:"La degradazione meteorica delle rocce è…", a:["la disgregazione e l'alterazione delle rocce sotto l'azione degli agenti atmosferici","la formazione di nuove rocce vulcaniche","il movimento dei continenti","la fusione delle rocce in profondità"], s:0},
+{c:"Cap. 10 — Degradazione delle rocce", q:"Il crioclastismo (o gelo-disgelo) consiste in…", a:["la rottura della roccia dovuta all'acqua che, congelando, dilata le fessure","la fusione della roccia al sole","la dissoluzione del calcare","la caduta di meteoriti"], s:0},
+{c:"Cap. 10 — Degradazione delle rocce", q:"Perché il ghiaccio rompe le rocce?", a:["perché il ghiaccio occupa più volume dell'acqua e dilata le fessure","perché il ghiaccio è più pesante dell'acqua","perché il ghiaccio è più caldo dell'acqua","perché il ghiaccio scioglie i minerali"], s:0},
+{c:"Cap. 10 — Degradazione delle rocce", q:"La degradazione chimica delle rocce consiste in…", a:["reazioni chimiche che trasformano i minerali in nuovi composti","la semplice rottura in frammenti","il movimento delle rocce lungo i pendii","la fusione delle rocce"], s:0},
+{c:"Cap. 10 — Degradazione delle rocce", q:"La dissoluzione è il processo per cui…", a:["l'acqua (con CO₂) scioglie i minerali, come il calcare","il ghiaccio rompe la roccia","il vento sabbia la roccia","la roccia si riscalda"], s:0},
+{c:"Cap. 10 — Degradazione delle rocce", q:"La dissoluzione del calcare nel tempo forma…", a:["cavità carsiche (grotte, doline)","nuove montagne","deserti di sabbia","laghi salati"], s:0},
+{c:"Cap. 10 — Degradazione delle rocce", q:"L'idratazione è…", a:["l'incorporazione di acqua nella struttura cristallina di un minerale","l'evaporazione dell'acqua dal suolo","la pioggia acida","la fusione del ghiaccio"], s:0},
+{c:"Cap. 10 — Degradazione delle rocce", q:"L'idrolisi è…", a:["la reazione tra gli ioni H⁺ e OH⁻ dell'acqua e i minerali silicati","la caduta delle foglie in autunno","il movimento delle frane","la formazione delle dune"], s:0},
+{c:"Cap. 10 — Degradazione delle rocce", q:"L'ossidazione delle rocce provoca…", a:["il tipico colore rossastro/ruggine (reazione dell'ossigeno con il ferro)","la scomparsa della roccia","il raffreddamento della roccia","la formazione di nuvole"], s:0},
+{c:"Cap. 10 — Degradazione delle rocce", q:"Una frana è…", a:["lo spostamento gravitativo di masse di terreno o roccia lungo un pendio","un tipo di nuvola","una corrente oceanica","una cavità carsica"], s:0},
+{c:"Cap. 10 — Degradazione delle rocce", q:"Quali sono i fattori principali che causano una frana?", a:["pendenza, presenza d'acqua, tipo di roccia, assenza di vegetazione","il vento e le stelle","la temperatura del Sole","la distanza dall'Equatore"], s:0},
+{c:"Cap. 10 — Degradazione delle rocce", q:"Una stalattite è…", a:["una formazione che pende dalla volta di una grotta","una formazione che si innalza dal suolo della grotta","un lago sotterraneo","un fiume carsico"], s:0},
+{c:"Cap. 10 — Degradazione delle rocce", q:"Una stalagmite è…", a:["una formazione che si innalza dal suolo di una grotta","una formazione che pende dal soffitto","una goccia d'acqua","un blocco di ghiaccio"], s:0},
+{c:"Cap. 10 — Degradazione delle rocce", q:"Per ridurre il rischio di frane è importante…", a:["evitare di costruire in aree predisposte e mantenere la vegetazione","disboscare i versanti","costruire sempre in fondovalle","aumentare la pendenza dei terreni"], s:0},
+// ---------------- CAP. 11 — Il vento e il paesaggio ----------------
+{c:"Cap. 11 — Il vento e il paesaggio", q:"La deflazione (sofflazione) è…", a:["l'asporto di granelli e polveri da parte del vento","la deposizione di sabbia","la pioggia di sabbia dal cielo","la formazione delle nuvole"], s:0},
+{c:"Cap. 11 — Il vento e il paesaggio", q:"La corrasione (abrasione) eolica è…", a:["la smerigliatura delle rocce da parte dei granelli trasportati dal vento","la dissoluzione del calcare","il movimento delle frane","la formazione delle dune"], s:0},
+{c:"Cap. 11 — Il vento e il paesaggio", q:"Un ventifatto è…", a:["una roccia levigata e modellata dall'azione del vento","un tipo di nuvola","una cavità carsica","un lago glaciare"], s:0},
+{c:"Cap. 11 — Il vento e il paesaggio", q:"Una duna è…", a:["un accumulo di sabbia di forma variabile, formato dal vento","una montagna vulcanica","un lago in salinità","una roccia levigata"], s:0},
+{c:"Cap. 11 — Il vento e il paesaggio", q:"Il loess è…", a:["un deposito di polveri fini trasportate dal vento","una distesa di dune","un deserto di ghiaccio","una formazione di stalattiti"], s:0},
+{c:"Cap. 11 — Il vento e il paesaggio", q:"Un erg è…", a:["una distesa continua di dune che copre vasti territori","un singolo cumulo di sabbia","una roccia levigata","un fiume sotterraneo"], s:0},
+{c:"Cap. 11 — Il vento e il paesaggio", q:"La deposizione dei materiali trasportati dal vento avviene quando…", a:["la forza (velocità) del vento diminuisce","il vento aumenta di velocità","piove","la temperatura aumenta"], s:0},
+{c:"Cap. 11 — Il vento e il paesaggio", q:"L'azione del vento sul paesaggio include…", a:["deflazione, corrasione e deposizione","frane e valanghe","dissoluzione e idrolisi","crioclastismo ed esfoliazione"], s:0},
+];
+
+const LETTERE = ["A","B","C","D"];
+const NUM_DOMANDE_SESSIONE = 10;
+
+let sessione = [];       // le 10 domande della sessione (indici in BANCHE)
+let risposte = [];       // risposta scelta per ciascuna domanda (null = non scelta)
+let posizione = 0;
+
+function mescola(array) {
+  const a = array.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function mostraPagina(id) {
+  document.getElementById("pagina-inizio").classList.add("nascosto");
+  document.getElementById("pagina-domanda").classList.add("nascosto");
+  document.getElementById("pagina-risultati").classList.add("nascosto");
+  document.getElementById(id).classList.remove("nascosto");
+}
+
+function avviaTest() {
+  const indici = mescola(BANCHE.map((_, i) => i));
+  sessione = indici.slice(0, NUM_DOMANDE_SESSIONE);
+  risposte = new Array(sessione.length).fill(null);
+  posizione = 0;
+  mostraPagina("pagina-domanda");
+  disegnaDomanda();
+}
+
+function disegnaDomanda() {
+  const q = BANCHE[sessione[posizione]];
+  document.getElementById("testo-progresso").textContent =
+    "Domanda " + (posizione + 1) + " di " + sessione.length;
+  document.getElementById("barra-riempimento").style.width =
+    ((posizione + 1) / sessione.length * 100) + "%";
+  document.getElementById("dom-categoria").textContent = q.c;
+  document.getElementById("dom-testo").textContent = q.q;
+
+  const cont = document.getElementById("dom-opzioni");
+  cont.innerHTML = "";
+  q.a.forEach((testo, i) => {
+    const div = document.createElement("div");
+    div.className = "opzione";
+    div.innerHTML =
+      '<span class="lettera">' + LETTERE[i] + ".</span>" +
+      '<label><input type="radio" name="opzione" value="' + i + '"' +
+      (risposte[posizione] === i ? " checked" : "") + ">" +
+      "<span>" + testo + "</span></label>";
+    div.querySelector("input").addEventListener("change", () => {
+      risposte[posizione] = i;
+      aggiornaEvidenziazioneSelezione();
+    });
+    cont.appendChild(div);
+  });
+  aggiornaEvidenziazioneSelezione();
+
+  document.getElementById("btn-indietro").disabled = (posizione === 0);
+  const btnAvanti = document.getElementById("btn-avanti");
+  if (posizione === sessione.length - 1) {
+    btnAvanti.textContent = "Vedi risultati ✓";
+  } else {
+    btnAvanti.textContent = "Avanti →";
+  }
+}
+
+function aggiornaEvidenziazioneSelezione() {
+  const label = document.querySelectorAll("#dom-opzioni label");
+  label.forEach((el, i) => {
+    el.classList.toggle("selezione", risposte[posizione] === i);
+  });
+  // se c'è una risposta, il pulsante avanti resta abilitato (si può comunque andare avanti)
+}
+
+function vaiIndietro() {
+  if (posizione > 0) { posizione--; disegnaDomanda(); }
+}
+
+function vaiAvanti() {
+  if (posizione < sessione.length - 1) {
+    posizione++;
+    disegnaDomanda();
+  } else {
+    mostraRisultati();
+  }
+}
+
+function mostraRisultati() {
+  let corrette = 0;
+  const errate = [];
+  const giuste = [];
+
+  sessione.forEach((indiceDomanda, i) => {
+    const q = BANCHE[indiceDomanda];
+    const risposta = risposte[i];
+    if (risposta === q.s) {
+      corrette++;
+      giuste.push({ q, risposta });
+    } else {
+      errate.push({ q, risposta });
+    }
+  });
+
+  const voto = (corrette / sessione.length) * 10;
+  const votoPulito = Math.round(voto * 10) / 10;
+
+  const elVoto = document.getElementById("ris-voto");
+  elVoto.textContent = votoPulito.toFixed(1).replace(".", ",") + " / 10";
+  elVoto.className = "voto " + (voto >= 7 ? "voto-buona" : voto >= 5 ? "voto-media" : "voto-brutta");
+
+  document.getElementById("ris-dettaglio").textContent =
+    corrette + " risposte giuste su " + sessione.length;
+
+  let commento = "";
+  if (voto >= 9) commento = "🏆 Eccellente! Dominò l'atmosfera!";
+  else if (voto >= 7) commento = "👍 Ottimo lavoro!";
+  else if (voto >= 5) commento = "📖 Vada bene, ma ripassi le parti sbagliate.";
+  else commento = "💪 Non si disperi: riveda il riassunto e riprovi!";
+  document.getElementById("ris-commento").textContent = commento;
+
+  const contErr = document.getElementById("ris-errate");
+  contErr.innerHTML = "";
+  if (errate.length === 0) {
+    contErr.innerHTML = '<div class="mini-risultato">Nessuna domanda errata. Complimenti! 🎉</div>';
+  } else {
+    errate.forEach(item => {
+      const div = document.createElement("div");
+      div.className = "mini-risultato errore";
+      const tua = item.risposta === null
+        ? "— (non hai risposto) —"
+        : LETTERE[item.risposta] + ". " + item.q.a[item.risposta];
+      div.innerHTML =
+        '<div class="cat">' + item.q.c + '</div>' +
+        '<div class="d">' + item.q.q + '</div>' +
+        '<div>Tua risposta: <span class="tua">' + tua + '</span></div>' +
+        '<div>Risposta giusta: <span class="giusta">' + LETTERE[item.q.s] + ". " + item.q.a[item.q.s] + '</span></div>';
+      contErr.appendChild(div);
+    });
+  }
+
+  const contOk = document.getElementById("ris-corrette");
+  contOk.innerHTML = "";
+  giuste.forEach(item => {
+    const div = document.createElement("div");
+    div.className = "mini-risultato";
+    div.innerHTML =
+      '<div class="cat">' + item.q.c + '</div>' +
+      '<div class="d">' + item.q.q + '</div>' +
+      '<div>Risposta giusta: <span class="giusta">' + LETTERE[item.q.s] + ". " + item.q.a[item.q.s] + '</span></div>';
+    contOk.appendChild(div);
+  });
+
+  mostraPagina("pagina-risultati");
+}
+
+function riavvia() {
+  avviaTest();
+}
+</script>
+</body>
+</html>

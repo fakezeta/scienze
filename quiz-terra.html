@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz — La Terra e la Luna</title>
+<style>
+  :root{
+    --blue:#1a56db; --blue-dark:#1e429f; --bg:#f3f4f6; --border:#d1d5db;
+    --green:#16a34a; --red:#dc2626; --ink:#1f2937;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:"Segoe UI", Roboto, Arial, sans-serif; background:var(--bg); color:var(--ink); min-height:100vh; display:flex; flex-direction:column;}
+
+  /* ---------- header ---------- */
+  header{background:#fff; border-bottom:1px solid var(--border); position:sticky; top:0; z-index:10; box-shadow:0 1px 4px rgba(0,0,0,.06);}
+  .steps-bar{display:flex; align-items:center; justify-content:center; gap:4px; padding:12px 8px; flex-wrap:wrap;}
+  .arrow{background:none; border:none; font-size:26px; color:var(--blue); cursor:pointer; padding:0 10px; line-height:1;}
+  .arrow:disabled{color:#cbd5e1; cursor:default;}
+  .step{width:34px; height:38px; border:none; background:none; font-size:16px; font-weight:600; color:var(--blue); cursor:pointer; position:relative; border-radius:6px;}
+  .step:hover{background:#eef2ff;}
+  .step.active{background:#fff;}
+  .step.active::after{content:""; position:absolute; left:6px; right:6px; bottom:-13px; height:3px; background:var(--blue); border-radius:2px;}
+  .step.done{color:var(--green);}
+  .step.answered:not(.active){color:var(--green);}
+
+  /* ---------- start screen ---------- */
+  .screen{display:none;}
+  .screen.visible{display:block;}
+  #startScreen{max-width:640px; margin:0 auto; padding:60px 24px; text-align:center;}
+  #startScreen h1{font-size:30px; margin-bottom:12px;}
+  #startScreen p{color:#4b5563; margin-bottom:8px; line-height:1.6;}
+  .big-btn{margin-top:28px; background:var(--blue); color:#fff; border:none; font-size:18px; font-weight:600; padding:14px 44px; border-radius:10px; cursor:pointer;}
+  .big-btn:hover{background:var(--blue-dark);}
+  .rules{margin-top:24px; background:#fff; border:1px solid var(--border); border-radius:10px; padding:18px 22px; text-align:left; color:#374151;}
+  .rules li{margin:6px 0 6px 18px; line-height:1.5;}
+
+  /* ---------- quiz screen ---------- */
+  main{flex:1; display:flex; flex-direction:column;}
+  #quizScreen{flex:1;}
+  .card{max-width:860px; width:100%; margin:28px auto; background:#fff; border:1px solid var(--border); border-radius:12px; padding:34px 40px 40px; box-shadow:0 2px 8px rgba(0,0,0,.05);}
+  .cat{font-weight:700; font-size:17px; margin-bottom:26px;}
+  .qtext{font-size:18px; margin-bottom:26px; line-height:1.5;}
+  .option-row{display:flex; align-items:center; gap:14px; margin-bottom:18px;}
+  .letter{font-weight:700; font-size:17px; width:20px;}
+  .opt-box{flex:1; display:flex; align-items:center; gap:12px; border:1px solid var(--border); border-radius:10px; padding:14px 18px; cursor:pointer; transition:background .15s, border-color .15s;}
+  .opt-box:hover{background:#eef2ff; border-color:var(--blue);}
+  .opt-box.selected{border-color:var(--blue); background:#eff6ff;}
+  .opt-box input{width:19px; height:19px; accent-color:var(--blue); cursor:pointer;}
+  .opt-box span{font-size:16px;}
+
+  .nav{display:flex; justify-content:space-between; align-items:center; max-width:860px; width:100%; margin:0 auto 30px; padding:0 4px;}
+  .nav button{border:1px solid var(--border); background:#fff; font-size:15px; font-weight:600; padding:10px 22px; border-radius:8px; cursor:pointer; color:var(--ink);}
+  .nav button:hover:not(:disabled){background:#eef2ff; border-color:var(--blue); color:var(--blue);}
+  .nav button:disabled{opacity:.4; cursor:default;}
+  .finish-btn{background:var(--green) !important; border:none !important; color:#fff !important;}
+  .finish-btn:hover{background:#15803d !important; color:#fff !important;}
+  .nav .counter{font-size:14px; color:#6b7280;}
+
+  /* ---------- results ---------- */
+  #resultsScreen{max-width:860px; margin:0 auto; padding:30px 16px 50px; width:100%;}
+  .grade-card{background:#fff; border:1px solid var(--border); border-radius:12px; padding:28px; display:flex; align-items:center; gap:26px; margin-bottom:26px; flex-wrap:wrap;}
+  .grade-circle{width:96px; height:96px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:30px; font-weight:800; color:#fff; flex-shrink:0;}
+  .grade-circle.g-buono{background:var(--green);} .grade-circle.g-va{background:#d97706;} .grade-circle.g-basso{background:var(--red);}
+  .grade-info h2{font-size:22px; margin-bottom:6px;}
+  .grade-info p{color:#4b5563;}
+  .section-title{font-size:20px; font-weight:700; margin:26px 0 14px;}
+  .res-q{background:#fff; border:1px solid var(--border); border-left:5px solid var(--red); border-radius:10px; padding:18px 22px; margin-bottom:14px;}
+  .res-q .rq{font-weight:600; margin-bottom:10px; line-height:1.45;}
+  .res-q .rq .cat-tag{font-size:12px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:.4px; display:block; margin-bottom:4px;}
+  .res-opt{display:flex; align-items:center; gap:10px; margin:6px 0; font-size:15px; line-height:1.4;}
+  .res-opt .mark{width:22px; text-align:center; font-weight:700; flex-shrink:0;}
+  .res-opt.wrong{color:var(--red); font-weight:600;}
+  .res-opt.right{color:var(--green); font-weight:600; background:#f0fdf4; border-radius:8px; padding:6px 8px 6px 0;}
+  .res-opt .mark{font-size:15px;}
+  .res-q.unanswered .rq{color:#92400e;}
+  .unanswered-tag{display:inline-block; background:#fef3c7; color:#92400e; font-size:12px; font-weight:700; padding:3px 10px; border-radius:20px; margin-bottom:8px;}
+  .perfect{background:#f0fdf4; border:1px solid #bbf7d0; border-radius:12px; padding:22px; text-align:center; font-size:18px; font-weight:600; color:var(--green); margin-bottom:20px;}
+  footer{text-align:center; padding:16px; color:#9ca3af; font-size:13px;}
+  @media(max-width:640px){ .card{padding:24px 20px;} .steps-bar{gap:0;} .step{width:26px; font-size:14px;} }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="steps-bar" id="stepsBar" style="display:none;">
+    <button class="arrow" id="prevArrow" title="Precedente">&#10094;</button>
+    <div id="steps" style="display:flex; gap:2px;"></div>
+    <button class="arrow" id="nextArrow" title="Successiva">&#10095;</button>
+  </div>
+</header>
+
+<main>
+  <!-- START -->
+  <section id="startScreen" class="screen visible">
+    <h1>🌍 Quiz — La Terra e la Luna</h1>
+    <p>Unità 3: forma e dimensioni della Terra, coordinate, carte geografiche, cartografia digitale, moti della Terra, fusi orari, la Luna e la misura del tempo.</p>
+    <div class="rules">
+      <b>Come funziona</b>
+      <ul>
+        <li>Vengono pescate <b>10 domande a caso</b> da una banca di <b>100 domande</b>.</li>
+        <li>Scegli una risposta per ogni domanda (A, B o C).</li>
+        <li>Puoi andare avanti e indietro con le frecce o i numeri in alto.</li>
+        <li>Al termine vedrai il <b>voto in decimi</b> e le <b>domande errate</b> con la soluzione.</li>
+        <li>Con <i>Gioca ancora</i> ottieni 10 nuove domande.</li>
+      </ul>
+    </div>
+    <button class="big-btn" onclick="startQuiz()">Avvia il test ▶</button>
+  </section>
+
+  <!-- QUIZ -->
+  <section id="quizScreen" class="screen"></section>
+
+  <!-- RESULTS -->
+  <section id="resultsScreen" class="screen"></section>
+</main>
+
+<footer>Quiz di geografia — La Terra e la Luna · 100 domande in banca</footer>
+
+<script>
+/* ================= BANCA DOMANDE (100) =================
+   formato: [categoria, domanda, [A, B, C], indiceGiusta(0-2)] */
+const BANK = [
+// ---------- FORMA E DIMENSIONI DELLA TERRA (1-13) ----------
+["Forma della Terra","Qual è il solido geometrico che meglio descrive la forma della Terra?",["Ellissoide di rotazione","Sfera perfetta","Geoido"],0],
+["Forma della Terra","Quanto misura il raggio equatoriale della Terra?",["6 378 km","6 357 km","6 371 km"],0],
+["Forma della Terra","Quanto misura il raggio polare (asse minore) della Terra?",["6 357 km","6 378 km","6 371 km"],0],
+["Forma della Terra","Quanto misura il raggio medio della Terra?",["6 371 km","6 378 km","6 357 km"],0],
+["Forma della Terra","Quanto vale circa la superficie della Terra?",["510 milioni di km²","361 milioni di km²","149 milioni di km²"],0],
+["Forma della Terra","Che cos'è il geoido?",["La superficie su cui l'accelerazione di gravità ha lo stesso valore in ogni punto","La superficie media degli oceani","Un solido perfetto a forma di sfera"],0],
+["Forma della Terra","Quale scienziato calcolò la circonferenza terrestre nel III secolo a.C.?",["Eratostene di Cirene","Pitagora","Aristotele"],0],
+["Forma della Terra","Quale città usò Eratostene insieme ad Alessandria per il suo calcolo?",["Siene (oggi Assuan)","Atene","Cartagine"],0],
+["Forma della Terra","Quale angolo misurò Eratostene fra i raggi solari ad Alessandria e la verticale?",["Circa 7°","Circa 15°","Circa 23°"],0],
+["Forma della Terra","Quale filosofo greco ipotizzò la forma sferica della Terra nel V secolo a.C.?",["Pitagora","Platone","Talete"],0],
+["Forma della Terra","Quale di queste è una prova indiretta della sfericità della Terra?",["La curva dell'ombra terrestre sulla Luna durante le eclissi","L'alternarsi del dì e della notte","La presenza dei vulcani attivi"],0],
+["Forma della Terra","Quanto vale la differenza fra raggio equatoriale e raggio polare?",["Circa 21 km","Circa 210 km","Circa 2 100 km"],0],
+["Forma della Terra","Quanto misura approssimativamente la circonferenza terrestre all'Equatore?",["40 000 km","30 000 km","50 000 km"],0],
+["Forma della Terra","Il campo magnetico terrestre è generato da...",["Correnti elettriche nel nucleo esterno","Il movimento del ferro fuso nel mantello","I movimenti della crosta continentale"],0],
+// ---------- COORDINATE GEOGRAFICHE (14-25) ----------
+["Coordinate geografiche","Quale è il meridiano di riferimento (0°)?",["Quello di Greenwich","Quello di Roma","Quello di Parigi"],0],
+["Coordinate geografiche","Quale è il parallelo di riferimento (0°)?",["L'Equatore","Il Tropico del Cancro","Il Circolo polare artico"],0],
+["Coordinate geografiche","La latitudine misura...",["La distanza angolare di un punto dall'Equatore","La distanza angolare di un punto da Greenwich","La distanza in chilometri dal centro della Terra"],0],
+["Coordinate geografiche","La longitudine si misura...",["Da 0° a 180° Est o Ovest","Da 0° a 90° Nord o Sud","Da 0° a 360° in senso orario"],0],
+["Coordinate geografiche","Quale stella indica la direzione del Nord nell'emisfero boreale?",["La Stella polare","Vega","La Croce del Sud"],0],
+["Coordinate geografiche","Nell'emisfero australe ci si orienta di notte usando...",["La Croce del Sud","La Stella polare","La Luna piena"],0],
+["Coordinate geografiche","L'ago della bussola punta verso...",["Il Polo nord magnetico","Il Polo nord geografico","Il Polo sud magnetico"],0],
+["Coordinate geografiche","La differenza tra la direzione dell'ago magnetico e quella del Polo nord geografico si chiama...",["Declinazione magnetica","Precessione","Eccentricità"],0],
+["Coordinate geografiche","Quanto misura approssimativamente un meridiano completo (da un Polo all'altro e ritorno)?",["40 000 km","20 000 km","10 000 km"],0],
+["Coordinate geografiche","L'Equatore divide la Terra in...",["Due emisferi: boreale e australe","Due emisferi: orientale e occidentale","Due parti, una sempre illuminata e una sempre in ombra"],0],
+["Coordinate geografiche","La latitudine di Roma è circa...",["41° 55' N","12° 27' E","45° 00' S"],0],
+["Coordinate geografiche","Quanti gradi di longitudine corrispondono a un'ora di tempo?",["15°","10°","24°"],0],
+// ---------- CARTE GEOGRAFICHE (26-38) ----------
+["Carte geografiche","Le carte geografiche sono rappresentazioni della superficie terrestre...",["Approssimate, ridotte e simboliche","Ridotte ed esatte in ogni dettaglio","In scala reale, senza deformazioni"],0],
+["Carte geografiche","Cosa significa una scala 1:50 000?",["1 cm sulla carta corrisponde a 500 m in realtà","1 cm sulla carta corrisponde a 50 000 m in realtà","1 km in realtà corrisponde a 1 cm sulla carta"],0],
+["Carte geografiche","Il requisito dell'equidistanza richiede che...",["Il rapporto fra le lunghezze sia costante","Le aree rappresentate siano uguali","Gli angoli siano conservati"],0],
+["Carte geografiche","Il requisito dell'isogonia (conformità) richiede che...",["Gli angoli siano conservati","Le aree siano uguali","Le distanze siano costanti"],0],
+["Carte geografiche","Quale rappresentazione della Terra rispetta tutti e tre i requisiti?",["Il mappamondo (globo)","La carta di Mercatore","La carta topografica regionale"],0],
+["Carte geografiche","La proiezione di Mercatore è un esempio di...",["Proiezione modificata (conforme)","Proiezione equivalente (aree uguali)","Proiezione senza deformazioni"],0],
+["Carte geografiche","Nella proiezione conforme di Gauss il reticolato viene disegnato su...",["Un ellissoide","Una sfera perfetta","Un piano"],0],
+["Carte geografiche","Una carta topografica rappresenta...",["Il territorio con il dettaglio del rilievo","Solo i confini politici","Solo la rete stradale"],0],
+["Carte geografiche","La legenda di una carta geografica è...",["La chiave che spiega i simboli utilizzati","La scala della carta","Il titolo della carta"],0],
+["Carte geografiche","Una carta in scala 1:10 000 rispetto a una in scala 1:5 000 000...",["Mostra più dettagli del territorio","Mostra una zona più ampia","È meno precisa"],0],
+["Carte geografiche","Una carta tematica...",["Rappresenta un argomento specifico (clima, popolazione, ecc.)","Rappresenta tutti gli aspetti del territorio","Non ha una scala"],0],
+["Carte geografiche","Nelle proiezioni pure il reticolato geografico viene riportato su...",["Una superficie ausiliaria (piano, cilindro o cono)","Un globo sferico","Direttamente sul terreno"],0],
+["Carte geografiche","La proiezione interrotta di Goode-Philip è...",["Equivalente, ma i meridiani non sono più linee rette","Conforme e equidistante","Priva di ogni deformazione"],0],
+// ---------- CARTOGRAFIA DIGITALE (39-50) ----------
+["Cartografia digitale","Che cos'è un GIS?",["Un sistema informatico per acquisire e analizzare dati georeferenziati","Un sistema di satelliti per la posizione","Un tipo di bussola elettronica"],0],
+["Cartografia digitale","Quanti satelliti compongono approssimativamente il sistema GPS?",["30","24","100"],0],
+["Cartografia digitale","A quale altitudine orbitano i satelliti del GPS?",["Circa 20 200 km","Circa 2 000 km","Circa 384 000 km"],0],
+["Cartografia digitale","Quanti satelliti servono per determinare la posizione in 3D con il GPS?",["Almeno 4","3","8"],0],
+["Cartografia digitale","Come si chiama il sistema satellitare europeo di posizionamento?",["Galileo","GLONASS","BeiDou"],0],
+["Cartografia digitale","Come si chiama il sistema satellitare russo di posizionamento?",["GLONASS","Galileo","GPS"],0],
+["Cartografia digitale","I sensori attivi dei satelliti...",["Inviano e ricevono segnali (es. radar)","Ricevono solo la radiazione riflessa","Scattano solo fotografie a colori"],0],
+["Cartografia digitale","Google Earth integra...",["Immagini satellitari e aeree con dati cartografici","Solo fotografie aeree d'epoca","Solo dati cartografici, senza immagini"],0],
+["Cartografia digitale","In un GIS un livello tematico di dati si chiama...",["Layer (strato)","Pixel","Campo (colonna di attributi)"],0],
+["Cartografia digitale","La precisione standard del GPS in campo aperto è di circa...",["4-5 metri","50 metri","1 chilometro"],0],
+["Cartografia digitale","I segnali del GPS viaggiano alla velocità di...",["Luce","Suono","Rotazione terrestre"],0],
+["Cartografia digitale","Una carta georeferenziata è una carta...",["Collegata a coordinate della superficie terrestre","Senza coordinate","Stampata solo su carta"],0],
+// ---------- MOTO DI ROTAZIONE (51-63) ----------
+["Moto di rotazione","Quanto dura il giorno siderale?",["23 h 56 min 4 s","24 h esatte","22 h 56 min 4 s"],0],
+["Moto di rotazione","In quale senso ruota la Terra sul proprio asse?",["Da Ovest verso Est","Da Est verso Ovest","Da Sud verso Nord"],0],
+["Moto di rotazione","Di quanto è inclinato l'asse terrestre rispetto alla perpendicolare al piano orbitale?",["23° 27'","45° 00'","15° 00'"],0],
+["Moto di rotazione","Visto dal Polo Nord, la rotazione terrestre è...",["Antioraria","Oraria","Alternata"],0],
+["Moto di rotazione","Che cos'è il circolo di illuminazione (terminatore)?",["La linea che separa l'emisfero illuminato da quello in ombra","L'orbita del Sole nel cielo","Il confine fra i fusi orari"],0],
+["Moto di rotazione","Il crepuscolo è...",["La transizione graduale fra luce e buio","Il tramonto esatto del Sole","L'ombra della Luna sulla Terra"],0],
+["Moto di rotazione","Nell'emisfero boreale la forza di Coriolis devia i corpi in movimento...",["Verso destra","Verso sinistra","Senza deviarli"],0],
+["Moto di rotazione","Nell'emisfero australe la forza di Coriolis devia i corpi in movimento...",["Verso sinistra","Verso destra","Verso l'alto"],0],
+["Moto di rotazione","La velocità lineare di rotazione terrestre è massima...",["All'Equatore (circa 1 670 km/h)","Ai Poli","Ai Tropici"],0],
+["Moto di rotazione","Quale di questi NON è dovuto alla forza di Coriolis?",["Lo scolo dell'acqua nei lavelli","La deviazione delle correnti marine","La rotazione degli uragani"],0],
+["Moto di rotazione","L'alternarsi del dì e della notte è causato dal...",["Moto di rotazione terrestre","Moto di rivoluzione terrestre","Moto della Luna"],0],
+["Moto di rotazione","Al Polo Nord d'estate...",["Il Sole non tramonta mai","Il Sole non sorge mai","Il dì dura 12 ore esatte"],0],
+["Moto di rotazione","Quanto dura il giorno solare medio?",["24 ore","23 h 56 min","25 ore"],0],
+// ---------- MOTO DI RIVOLUZIONE (64-78) ----------
+["Moto di rivoluzione","Quanto dura l'anno siderale?",["365 g 6 h 9 min 10 s","365 g esatti","366 g 6 h 9 min"],0],
+["Moto di rivoluzione","L'afelio è il punto dell'orbita in cui la Terra è...",["Più lontana dal Sole (inizio luglio)","Più vicina al Sole (inizio gennaio)","A distanza costante"],0],
+["Moto di rivoluzione","Il perielio è il punto dell'orbita in cui la Terra è...",["Più vicina al Sole (inizio gennaio)","Più lontana dal Sole (inizio luglio)","Allo Zenit del Sole"],0],
+["Moto di rivoluzione","La causa principale delle stagioni è...",["L'inclinazione dell'asse terrestre","La distanza variabile dal Sole","Il moto della Luna"],0],
+["Moto di rivoluzione","All'equinozio di primavera...",["Il dì e la notte durano 12 h in tutto il mondo","La notte è la più lunga dell'anno","Il Sole è allo Zenit ai Tropici"],0],
+["Moto di rivoluzione","Al solstizio d'estate nell'emisfero boreale...",["Il dì è il più lungo dell'anno","La notte è più lunga del dì","Dì e notte durano 12 h"],0],
+["Moto di rivoluzione","Quanto misura approssimativamente la lunghezza dell'orbita terrestre?",["940 milioni di km","94 milioni di km","9 400 milioni di km"],0],
+["Moto di rivoluzione","I Tropici si trovano alla latitudine di...",["23° 27'","66° 33'","45° 00'"],0],
+["Moto di rivoluzione","I Circoli polari si trovano alla latitudine di...",["66° 33'","23° 27'","90° 00'"],0],
+["Moto di rivoluzione","La zona intertropicale viene chiamata anche...",["Zona torrida","Zona temperata","Calotta polare"],0],
+["Moto di rivoluzione","Le stagioni nei due emisferi sono...",["Invertite fra loro","Sempre uguali","Identiche per durata"],0],
+["Moto di rivoluzione","Il Sole si trova allo Zenit sull'Equatore...",["Gli equinozi","I solstizi","Tutto l'anno"],0],
+["Moto di rivoluzione","Perché la distanza dal Sole non è la causa delle stagioni?",["La differenza di radiazione tra afelio e perielio è solo di circa il 7%","Perché l'orbita è circolare perfetta","Perché l'atmosfera blocca i raggi"],0],
+["Moto di rivoluzione","Un tropico è il luogo dove il Sole è allo Zenit...",["Al solstizio","All'equinozio","Solo a mezzanotte"],0],
+["Moto di rivoluzione","Al solstizio d'estate boreale il Polo Sud è...",["In buio continuo","In luce continua","Sempre all'alba"],0],
+// ---------- COORDINATE E FUSI ORARI (79-90) ----------
+["Fusi orari","In quanti fusi orari è diviso il globo terrestre?",["24","15","36"],0],
+["Fusi orari","La linea del cambiamento di data passa approssimativamente per il meridiano...",["180°","0°","90° E"],0],
+["Fusi orari","Attraversando la linea del cambiamento di data da Ovest verso Est si...",["Perde un giorno","Guadagna un giorno","Cambia l'ora di 12 minuti"],0],
+["Fusi orari","La precessione luni-solare dell'asse terrestre ha un periodo di circa...",["25 800 anni","100 000 anni","365 anni"],0],
+["Fusi orari","I cicli di Milanković sono usati per spiegare...",["Le glaciazioni","Le maree oceaniche","I terremoti"],0],
+["Fusi orari","In Italia l'ora legale è in vigore...",["Da fine marzo a fine ottobre","Da fine ottobre a fine marzo","Solo in inverno"],0],
+["Fusi orari","Confrontando l'ora locale con quella di Greenwich si può determinare...",["La longitudine di un luogo","La latitudine di un luogo","L'altezza sul livello del mare"],0],
+["Fusi orari","Quanti minuti di tempo corrispondono a 1° di longitudine?",["4 minuti","15 minuti","60 minuti"],0],
+["Fusi orari","Se l'ora locale è in anticipo rispetto a quella di Greenwich, il luogo si trova...",["A Est di Greenwich","A Ovest di Greenwich","Sull'Equatore"],0],
+["Fusi orari","Il ciclo dell'eccentricità dell'orbita terrestre dura circa...",["100 000 anni","25 800 anni","10 000 anni"],0],
+["Fusi orari","L'ultima glaciazione si è terminata circa...",["10 000-11 000 anni fa","100 000 anni fa","1 milione di anni fa"],0],
+["Fusi orari","Il fuso orario di riferimento (fuso 0) è quello...",["Di Greenwich","Di Roma","Di Tokyo"],0],
+// ---------- LA LUNA (91-100) ----------
+["La Luna","Quanto vale la gravità sulla superficie lunare rispetto a quella terrestre?",["1/6","1/2","1/81"],0],
+["La Luna","Quanto vale la massa della Luna rispetto a quella della Terra?",["Circa 1/81","Circa 1/4","Circa 1/6"],0],
+["La Luna","Quale escursione di temperatura si registra sulla Luna?",["Da +110 °C a -150 °C","Da +50 °C a -50 °C","Da +30 °C a -30 °C"],0],
+["La Luna","Che cosa sono i mari (mare) lunari?",["Pianure di basalto dovute ad antiche lave","Acque liquide congelate","Laghi secolarmente asciutti"],0],
+["La Luna","La Luna nuova (novilunio) si verifica quando...",["La Luna si trova fra la Terra e il Sole","La Terra si trova fra il Sole e la Luna","La Luna è perpendicolare al Sole"],0],
+["La Luna","La Luna piena (plenilunio) si verifica quando...",["La Terra si trova fra il Sole e la Luna","La Luna si trova fra la Terra e il Sole","Sole, Terra e Luna formano un triangolo"],0],
+["La Luna","Un'eclissi di Luna si verifica quando...",["La Terra si trova fra il Sole e la Luna","La Luna si trova fra il Sole e la Terra","La Terra è in afelio"],0],
+["La Luna","Un'eclissi di Sole si verifica quando...",["La Luna si trova fra il Sole e la Terra","La Terra si trova fra il Sole e la Luna","Il Sole è in perielio"],0],
+["La Luna","Un'eclissi solare anulare si verifica quando la Luna è in...",["Apogeo (troppo lontana per coprire il Sole)","Perigeo (troppo vicina)","Nodo orbitale"],0],
+["La Luna","La rotazione sincrona della Luna significa che...",["Rivolge alla Terra sempre la stessa faccia","Non ruota affatto","Ruota più velocemente della Terra"],0],
+];
+/* --- completamento a 100 con la misura del tempo --- */
+const BANK2 = [
+["Misura del tempo","Perché il giorno solare dura circa 4 minuti più del giorno siderale?",["Perché la Terra si sposta anche lungo la propria orbita","Perché la rotazione rallenta","Perché la Luna frena la Terra"],0],
+];
+BANK.push(...BANK2);
+
+const QUESTIONS = BANK;
+const N_QUESTIONS = 10;
+
+/* ================= STATO ================= */
+let session = [];          // le 10 domande della sessione
+let answers = [];          // risposta scelta per ogni domanda (null se vuota)
+let current = 0;
+
+/* ================= UTILITY ================= */
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('visible'));
+  document.getElementById(id).classList.add('visible');
+}
+
+/* ================= AVVIO ================= */
+function startQuiz(){
+  session = shuffle(QUESTIONS).slice(0, N_QUESTIONS);
+  answers = new Array(N_QUESTIONS).fill(null);
+  current = 0;
+  document.getElementById('stepsBar').style.display = 'flex';
+  show('quizScreen');
+  renderSteps();
+  renderQuestion();
+}
+
+/* ================= RENDER STEP BAR ================= */
+function renderSteps(){
+  const box = document.getElementById('steps');
+  box.innerHTML = '';
+  for(let i=0;i<N_QUESTIONS;i++){
+    const b = document.createElement('button');
+    b.className = 'step' + (i===current?' active':'') + (answers[i]!==null?' answered':'');
+    b.textContent = i+1;
+    b.onclick = ()=>{ current=i; renderSteps(); renderQuestion(); };
+    box.appendChild(b);
+  }
+}
+
+/* ================= RENDER DOMANDA ================= */
+function renderQuestion(){
+  const [cat, q, opts] = session[current];
+  const letters = ['A','B','C'];
+  let html = `<div class="card">
+    <div class="cat">${cat}</div>
+    <div class="qtext">${q}</div>`;
+  opts.forEach((o,i)=>{
+    const sel = answers[current]===i ? ' selected':'';
+    html += `<div class="option-row">
+      <div class="letter">${letters[i]}.</div>
+      <label class="opt-box${sel}">
+        <input type="radio" name="q${current}" value="${i}" ${answers[current]===i?'checked':''} onchange="pick(${i})">
+        <span>${o}</span>
+      </label>
+    </div>`;
+  });
+  html += `</div>`;
+  html += `<div class="nav">
+    <button id="btnPrev" onclick="go(-1)" ${current===0?'disabled':''}>◀ Precedente</button>
+    <span class="counter">Domanda ${current+1} di ${N_QUESTIONS}</span>
+    ${ current===N_QUESTIONS-1
+        ? `<button class="finish-btn" onclick="finish()">Concludi il test ✓</button>`
+        : `<button id="btnNext" onclick="go(1)">Successiva ▶</button>` }
+  </div>`;
+  document.getElementById('quizScreen').innerHTML = html;
+  document.getElementById('prevArrow').disabled = current===0;
+  document.getElementById('nextArrow').disabled = current===N_QUESTIONS-1;
+  renderSteps();
+}
+
+function pick(i){ answers[current] = i; renderQuestion(); }
+function go(dir){
+  const n = current + dir;
+  if(n<0 || n>=N_QUESTIONS) return;
+  current = n;
+  renderQuestion();
+}
+document.getElementById('prevArrow').onclick = ()=>go(-1);
+document.getElementById('nextArrow').onclick = ()=>go(1);
+
+/* ================= RISULTATI ================= */
+function finish(){
+  let correct = 0;
+  session.forEach((q,i)=>{ if(answers[i]===q[3]) correct++; });
+  const vote = (correct / N_QUESTIONS * 10);
+  const voteTxt = vote.toFixed(2).replace('.',',').replace(/,?0+$/,'') || '0';
+
+  const gradeCls = vote>=8 ? 'g-buono' : vote>=6 ? 'g-va' : 'g-basso';
+  const praise = vote>=8 ? 'Ottimo lavoro! 🎉' : vote>=6 ? 'Buon risultato, continua così! 👍' : 'Devi ripassare qualche capitolo. 💪';
+
+  let html = `<div class="grade-card">
+    <div class="grade-circle ${gradeCls}">${voteTxt}/10</div>
+    <div class="grade-info">
+      <h2>${praise}</h2>
+      <p>Hai risposto correttamente a <b>${correct}</b> domande su <b>${N_QUESTIONS}</b>.</p>
+      <p>Voto in decimi: <b>${voteTxt}/10</b></p>
+    </div>
+  </div>`;
+
+  const wrong = [];
+  session.forEach((q,i)=>{ if(answers[i]!==q[3]) wrong.push(i); });
+
+  if(wrong.length===0){
+    html += `<div class="perfect">🌟 Perfetto! Hai risposto correttamente a tutte le domande!</div>`;
+  } else {
+    html += `<div class="section-title">❌ Domande da rivedere (${wrong.length})</div>`;
+    wrong.forEach(i=>{
+      const [cat, q, opts, giusta] = session[i];
+      const letters = ['A','B','C'];
+      const unanswered = answers[i]===null;
+      html += `<div class="res-q ${unanswered?'unanswered':''}">
+        ${unanswered?'<span class="unanswered-tag">Non risposta</span>':''}
+        <div class="rq"><span class="cat-tag">${cat}</span>${i+1}. ${q}</div>`;
+      if(!unanswered){
+        html += `<div class="res-opt wrong"><span class="mark">✗</span>${letters[answers[i]]}. ${opts[answers[i]]}</div>`;
+      }
+      html += `<div class="res-opt right"><span class="mark">✓</span>${letters[giusta]}. ${opts[giusta]}</div>`;
+      html += `</div>`;
+    });
+  }
+
+  html += `<div class="nav" style="margin-top:26px;">
+    <button onclick="startQuiz()">🔄 Gioca ancora (10 domande nuove)</button>
+    <button onclick="backToStart()">🏠 Menu iniziale</button>
+  </div>`;
+
+  document.getElementById('resultsScreen').innerHTML = html;
+  document.getElementById('stepsBar').style.display = 'none';
+  show('resultsScreen');
+  window.scrollTo(0,0);
+}
+
+function backToStart(){
+  show('startScreen');
+  window.scrollTo(0,0);
+}
+</script>
+</body>
+</html>
