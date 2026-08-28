@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz di Scienze — Ripasso interattivo</title>
+<style>
+  :root {
+    --blu: #1565c0;
+    --blu-scuro: #0d47a1;
+    --verde: #2e7d32;
+    --rosso: #c62828;
+    --grigio: #5f6368;
+    --bordo: #dadce0;
+    --sfondo: #f1f3f4;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    background: var(--sfondo);
+    color: #202124;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 32px 16px;
+  }
+  .contenuto { width: 100%; max-width: 980px; }
+
+  .intestazione { text-align: center; margin-bottom: 8px; }
+  .intestazione h1 { font-size: 30px; color: var(--blu-scuro); margin-bottom: 8px; }
+  .intestazione p { color: var(--grigio); font-size: 15px; max-width: 620px; margin: 0 auto; line-height: 1.5; }
+
+  .totale {
+    display: inline-block;
+    margin: 18px auto 30px;
+    background: var(--blu);
+    color: #fff;
+    padding: 6px 18px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .totale-wrap { text-align: center; }
+
+  .griglia {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+  }
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.12);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .card:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,.18); }
+  .icona { font-size: 40px; margin-bottom: 10px; }
+  .card h2 { font-size: 19px; color: var(--blu-scuro); margin-bottom: 6px; }
+  .badge {
+    display: inline-block;
+    background: #e8f0fe;
+    color: var(--blu);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 999px;
+    margin-bottom: 12px;
+    width: fit-content;
+  }
+  .card ul {
+    list-style: none;
+    margin: 0 0 18px;
+    color: var(--grigio);
+    font-size: 13.5px;
+    line-height: 1.7;
+    flex-grow: 1;
+  }
+  .card ul li::before { content: "• "; color: var(--blu); font-weight: bold; }
+  .card a.pulsante {
+    display: block;
+    text-align: center;
+    background: var(--blu);
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 15px;
+    padding: 11px 0;
+    border-radius: 8px;
+    transition: background .15s ease;
+  }
+  .card a.pulsante:hover { background: var(--blu-scuro); }
+
+  footer {
+    text-align: center;
+    margin-top: 34px;
+    color: var(--grigio);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  footer a { color: var(--blu); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="contenuto">
+
+  <div class="intestazione">
+    <h1>🔬 Quiz di Scienze</h1>
+    <p>Collezioni di quiz interattivi per ripassare Scienze: atmosfera, chimica, la materia e la Terra.
+       Ogni quiz è composto da domande a scelta multipla con correzione immediata e spiegazioni.</p>
+  </div>
+
+  <div class="totale-wrap"><span class="totale">4 quiz · 422 domande in totale</span></div>
+
+  <div class="griglia">
+
+    <div class="card">
+      <div class="icona">🌤️</div>
+      <h2>L'atmosfera</h2>
+      <span class="badge">109 domande</span>
+      <ul>
+        <li>Che cos'è l'atmosfera e il suo riscaldamento</li>
+        <li>Pressione, venti e circolazione generale</li>
+        <li>Umidità, precipitazioni e perturbazioni</li>
+        <li>Le previsioni del tempo</li>
+        <li>Degradazione delle rocce e paesaggio</li>
+      </ul>
+      <a class="pulsante" href="quiz-atmosfera.html">Inizia il quiz</a>
+    </div>
+
+    <div class="card">
+      <div class="icona">🧪</div>
+      <h2>Chimica</h2>
+      <span class="badge">100 domande</span>
+      <ul>
+        <li>Cap. 1 — Tavola periodica</li>
+        <li>Cap. 2 — I composti</li>
+        <li>Cap. 3 — Le reazioni</li>
+        <li>Cap. 4 — Velocità ed equilibrio</li>
+      </ul>
+      <a class="pulsante" href="quiz-chimica.html">Inizia il quiz</a>
+    </div>
+
+    <div class="card">
+      <div class="icona">⚛️</div>
+      <h2>La Materia</h2>
+      <span class="badge">111 domande</span>
+      <ul>
+        <li>Stati fisici e passaggi di stato</li>
+        <li>Elementi, composti e miscele</li>
+        <li>Proprietà e separazioni</li>
+        <li>Trasformazioni</li>
+      </ul>
+      <a class="pulsante" href="quiz-materia.html">Inizia il quiz</a>
+    </div>
+
+    <div class="card">
+      <div class="icona">🌍</div>
+      <h2>La Terra e la Luna</h2>
+      <span class="badge">102 domande</span>
+      <ul>
+        <li>Forma, dimensioni e coordinate geografiche</li>
+        <li>Carte geografiche e cartografia digitale</li>
+        <li>Moto di rotazione e di rivoluzione</li>
+        <li>Fusi orari</li>
+        <li>La Luna</li>
+      </ul>
+      <a class="pulsante" href="quiz-terra.html">Inizia il quiz</a>
+    </div>
+
+  </div>
+
+  <footer>
+    Quiz realizzati in HTML e JavaScript puro — nessuna installazione, funziona in qualsiasi browser.<br>
+    <a href="https://github.com/fakezeta/scienze">Codice su GitHub</a>
+  </footer>
+
+</div>
+</body>
+</html>
