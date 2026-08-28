@@ -25,8 +25,7 @@ Fai doppio clic su un file `.html` (o su `index.html` per la pagina di partenza)
 
 ### Opzione 2 — GitHub Pages (già configurato)
 1. I file di questo progetto sono pubblicati nel repository [`fakezeta/scienze`](https://github.com/fakezeta/scienze).
-2. Il sito è attivo a **<https://fakezeta.github.io/scienze>** (nota: il dominio è `github.io`, non `github.com`).
-3. Per aggiornarlo basta fare *commit* e *push*: GitHub Pages ripubblica automaticamente i contenuti (verifica che **Settings → Pages** sia impostato su ramo `main`, cartella `/root`).
+2. Il sito è attivo a **<https://fakezeta.github.io/scienze>**.
 
 ## 📁 Struttura del progetto
 
