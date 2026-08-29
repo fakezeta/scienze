@@ -128,7 +128,7 @@
   button:disabled { opacity: .4; cursor: not-allowed; }
   .btn-secondario { background: #e8eaed; color: #3c4043; }
   .btn-primario { background: var(--blu); color: #fff; }
-  .btn-centro { display: flex; justify-content: center; margin-top: 24px; }
+  .btn-centro { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-top: 24px; }
   .btn-centro button { font-size: 17px; padding: 13px 40px; }
 
   /* pagina iniziale */
@@ -236,6 +236,7 @@
     <div id="ris-corrette"></div>
     <div class="btn-centro">
       <button class="btn-primario" onclick="riavvia()">🔄 Nuova sessione (altre 10 domande)</button>
+      <button class="btn-secondario" onclick="location.href='index.html'">🏠 Torna all'indice</button>
     </div>
   </div>
 
