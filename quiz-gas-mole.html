@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz — Dalle leggi dei gas alla mole</title>
+<style>
+  :root{
+    --blue:#1565c0;
+    --blue-dark:#0d47a1;
+    --blue-light:#e3f2fd;
+    --bg:#f4f6f8;
+    --border:#d9dee3;
+    --green:#2e7d32;
+    --green-bg:#e8f5e9;
+    --red:#c62828;
+    --red-bg:#ffebee;
+    --gray:#6b7280;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:'Segoe UI', Roboto, Arial, sans-serif;
+    background:var(--bg); color:#1f2937;
+    min-height:100vh; display:flex; flex-direction:column; align-items:center;
+  }
+  .app{
+    width:100%; max-width:900px; margin:24px auto;
+    background:#fff; border-radius:12px;
+    box-shadow:0 4px 20px rgba(0,0,0,.08);
+    overflow:hidden;
+  }
+  /* ---------- header ---------- */
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 16px; background:#fff; border-bottom:1px solid var(--border);
+  }
+  .topbar .logo{font-weight:700; color:var(--blue); font-size:1.05rem;}
+  .topbar .logo span{color:#c62828;}
+  .btn{
+    background:var(--blue); color:#fff; border:none; border-radius:8px;
+    padding:10px 20px; font-size:.95rem; font-weight:600; cursor:pointer;
+    transition:background .15s;
+  }
+  .btn:hover{background:var(--blue-dark);}
+  .btn.secondary{background:#fff; color:var(--blue); border:2px solid var(--blue);}
+  .btn.secondary:hover{background:var(--blue-light);}
+  .btn:disabled{opacity:.4; cursor:not-allowed;}
+
+  /* ---------- nav numbers ---------- */
+  .navbar{
+    display:flex; align-items:center; background:#eef1f5;
+    border-bottom:1px solid var(--border); padding:0 8px;
+    overflow-x:auto;
+  }
+  .nav-arrow{
+    background:none; border:none; font-size:1.4rem; color:var(--blue);
+    cursor:pointer; padding:10px 14px; flex-shrink:0;
+  }
+  .nav-arrow:disabled{color:#bbb; cursor:default;}
+  .nav-num{
+    flex:1; text-align:center; padding:12px 4px; cursor:pointer;
+    color:var(--blue); font-weight:700; font-size:1rem; position:relative;
+    user-select:none; min-width:38px;
+  }
+  .nav-num.answered{color:var(--green);}
+  .nav-num.current{color:var(--blue-dark); font-size:1.15rem;}
+  .nav-num.current::after{
+    content:""; position:absolute; left:25%; right:25%; bottom:0;
+    height:3px; background:var(--blue); border-radius:2px;
+  }
+  .nav-num.answered.current{color:var(--blue-dark);}
+
+  /* ---------- question ---------- */
+  .qbody{padding:28px 32px 40px; min-height:340px;}
+  .qtitle{font-size:1.3rem; font-weight:700; margin-bottom:18px; color:#111;}
+  .qtext{font-size:1.05rem; margin-bottom:26px; line-height:1.5;}
+  .opts{display:flex; flex-direction:column; gap:14px;}
+  .opt{
+    display:flex; align-items:center; gap:14px;
+    border:1px solid var(--border); border-radius:8px;
+    padding:14px 16px; cursor:pointer; transition:all .15s;
+  }
+  .opt:hover{background:var(--blue-light); border-color:var(--blue);}
+  .opt.selected{border-color:var(--blue); background:var(--blue-light); box-shadow:0 0 0 1px var(--blue);}
+  .opt .letter{font-weight:700; width:20px; color:#333;}
+  .opt input{accent-color:var(--blue); width:18px; height:18px; cursor:pointer;}
+  .opt label{flex:1; cursor:pointer;}
+  .qfooter{
+    display:flex; justify-content:space-between; align-items:center;
+    margin-top:34px;
+  }
+  .qcount{color:var(--gray); font-size:.9rem;}
+  .progress-wrap{
+    height:6px; background:#e5e9ee; width:100%;
+  }
+  .progress-fill{height:100%; background:var(--blue); width:0%; transition:width .3s;}
+
+  /* ---------- screens ---------- */
+  .screen{display:none;}
+  .screen.active{display:block;}
+
+  /* ---------- start screen ---------- */
+  .start{
+    padding:60px 40px; text-align:center;
+  }
+  .start .icon{font-size:4rem; margin-bottom:16px;}
+  .start h1{font-size:1.9rem; margin-bottom:12px; color:#111;}
+  .start p{color:var(--gray); margin-bottom:8px; font-size:1rem; line-height:1.6;}
+  .start .info-box{
+    background:var(--blue-light); border:1px solid #bbdefb; border-radius:10px;
+    padding:16px 20px; margin:24px auto; max-width:440px; text-align:left;
+    color:#0d47a1; font-size:.95rem; line-height:1.6;
+  }
+  .start .btn{margin-top:26px; font-size:1.1rem; padding:14px 40px;}
+
+  /* ---------- results ---------- */
+  .results{padding:32px;}
+  .score-card{
+    display:flex; align-items:center; justify-content:center; gap:28px;
+    background:linear-gradient(135deg,#e3f2fd,#f4f9ff);
+    border:1px solid #bbdefb; border-radius:14px;
+    padding:28px; margin-bottom:28px; flex-wrap:wrap;
+  }
+  .score-big{font-size:3.2rem; font-weight:800; color:var(--blue-dark); line-height:1;}
+  .score-detail{font-size:1.05rem; color:#334155; text-align:left;}
+  .score-detail b{font-size:1.25rem;}
+  .verdict{font-size:1.1rem; font-weight:700; margin-top:4px;}
+  .verdict.good{color:var(--green);}
+  .verdict.mid{color:#b26a00;}
+  .verdict.bad{color:var(--red);}
+
+  .results h2{font-size:1.15rem; margin:22px 0 14px; color:#111;}
+  .res-q{
+    border:1px solid var(--border); border-left:4px solid var(--red);
+    border-radius:8px; padding:16px 18px; margin-bottom:14px; background:#fff;
+  }
+  .res-q.ok{border-left-color:var(--green);}
+  .res-q .rq-top{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .res-q .rq-num{font-weight:700; color:var(--blue);}
+  .res-q .badge{
+    font-size:.75rem; font-weight:700; padding:3px 10px; border-radius:20px;
+  }
+  .badge.err{background:var(--red-bg); color:var(--red);}
+  .badge.ok{background:var(--green-bg); color:var(--green);}
+  .res-q .rq-text{font-weight:600; margin-bottom:10px; line-height:1.45;}
+  .res-q .rq-ans{font-size:.93rem; margin-bottom:5px;}
+  .rq-ans.chosen-wrong{color:var(--red); font-weight:600;}
+  .rq-ans.correct{color:var(--green); font-weight:600;}
+  .rq-ans .tag{
+    display:inline-block; font-size:.7rem; font-weight:700; text-transform:uppercase;
+    letter-spacing:.5px; margin-right:6px; opacity:.85;
+  }
+  .res-actions{display:flex; gap:12px; justify-content:center; margin-top:28px; flex-wrap:wrap;}
+  .only-errors{display:none;}
+  .show-ok .only-errors{display:none;}
+  .show-ok .show-ok-toggle{display:none;}
+  .show-ok-toggle{
+    background:none; border:none; color:var(--blue); cursor:pointer;
+    font-size:.9rem; margin:8px 0 4px; text-decoration:underline; padding:4px;
+  }
+  footer{text-align:center; color:#9aa4af; font-size:.8rem; margin:18px 0 30px;}
+
+  @media (max-width:560px){
+    .qbody{padding:20px 16px 30px;}
+    .score-big{font-size:2.4rem;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="logo">📚 Quiz <span>Dalle leggi dei gas alla mole</span></div>
+    <button class="btn secondary" id="btnExit" style="display:none;">← Esci</button>
+  </div>
+
+  <!-- NAVBAR -->
+  <div class="navbar" id="navbar" style="display:none;"></div>
+  <div class="progress-wrap" id="progressWrap" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- START SCREEN -->
+  <div class="screen active" id="screenStart">
+    <div class="start">
+      <div class="icon">🎈</div>
+      <h1>Quiz di Chimica — Dalle leggi dei gas alla mole</h1>
+      <p>Le leggi dei gas (Boyle, Charles, Gay-Lussac), lo zero assoluto,<br>massa atomica, la mole, il numero di Avogadro e i calcoli in moli.</p>
+      <div class="info-box">
+        📝 Verranno estratte <b>10 domande</b> a caso da una banca di <b>100 domande</b>.<br>
+        ✍️ Rispondi a tutte: alla fine vedrai il <b>voto in decimi</b> e le domande errate da ripassare.
+      </div>
+      <button class="btn" id="btnStart">Inizia il test ▶</button>
+    </div>
+  </div>
+
+  <!-- QUIZ SCREEN -->
+  <div class="screen" id="screenQuiz">
+    <div class="qbody">
+      <div class="qtitle" id="qTitle"></div>
+      <div class="qtext" id="qText"></div>
+      <div class="opts" id="qOpts"></div>
+      <div class="qfooter">
+        <span class="qcount" id="qCount"></span>
+        <button class="btn" id="btnNext">Avanti →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULTS SCREEN -->
+  <div class="screen" id="screenResults">
+    <div class="results">
+      <div class="score-card">
+        <div class="score-big" id="scoreBig">–</div>
+        <div class="score-detail">
+          <div>Voto in decimi</div>
+          <div><b id="scoreCount">–</b> risposte corrette su 10</div>
+          <div class="verdict" id="verdict"></div>
+        </div>
+      </div>
+
+      <h2>❌ Domande da ripassare</h2>
+      <div id="listErrors"></div>
+
+      <button class="show-ok-toggle" id="btnToggleOk">Mostra anche le risposte corrette ↓</button>
+      <div id="listOk" class="only-errors"></div>
+
+      <div class="res-actions">
+        <button class="btn" id="btnRetry">🔄 Nuova sessione (10 domande nuove)</button>
+        <button class="btn secondary" onclick="location.href='index.html'">🏠 Torna all'indice</button>
+      </div>
+    </div>
+  </div>
+</div>
+<footer>Studio interattivo · Unità C5 — Dalle leggi dei gas alla mole</footer>
+
+<script>
+/* ================================================================
+   BANCA DOMANDE — 100 domande
+   Formato: { top: argomento, q: testo, opz: [4 opzioni], sol: indice corretto }
+   ================================================================ */
+const DOMANDE = [
+  // ---------- LEGGI DEI GAS ----------
+  {top:"Leggi dei gas", q:"Le leggi dei gas descrivono il comportamento dei gas in relazione a:", opz:["pressione, volume e temperatura","colore, massa e densità","volume, massa e densità","pressione, temperatura e massa"], sol:0},
+  {top:"Leggi dei gas", q:"Le tre grandezze che descrivono lo stato di una massa di gas sono:", opz:["temperatura, volume e pressione","massa, densità e temperatura","volume, massa e densità","pressione, temperatura e massa"], sol:0},
+  {top:"Leggi dei gas", q:"Nel Sistema Internazionale la temperatura assoluta si misura in:", opz:["gradi Celsius","kelvin","Fahrenheit","pascal"], sol:1},
+  {top:"Leggi dei gas", q:"Il volume di un gas si misura in:", opz:["m³ o L","kg","Pa","K"], sol:0},
+  {top:"Leggi dei gas", q:"Nel Sistema Internazionale la pressione si misura in:", opz:["pascal","newton","kelvin","litri"], sol:0},
+  {top:"Leggi dei gas", q:"Quanti pascal corrisponde 1 bar?", opz:["10³ Pa","10⁴ Pa","10⁵ Pa","10⁶ Pa"], sol:2},
+  {top:"Leggi dei gas", q:"Chi nel 1662 dimostrò sperimentalmente la relazione tra pressione e volume di un gas?", opz:["Robert Boyle","Jacques Charles","Joseph Gay-Lussac","Amedeo Avogadro"], sol:0},
+  {top:"Leggi dei gas", q:"La legge di Boyle afferma che, in una trasformazione isoterma:", opz:["pressione e volume sono direttamente proporzionali","pressione e volume sono inversamente proporzionali","il volume resta sempre costante","la pressione resta sempre costante"], sol:1},
+  {top:"Leggi dei gas", q:"La legge di Boyle si esprime con la relazione:", opz:["p · V = costante","V/T = costante","p/T = costante","p + V = costante"], sol:0},
+  {top:"Leggi dei gas", q:"Una trasformazione isoterma è una trasformazione in cui:", opz:["la pressione è costante","il volume è costante","la temperatura è costante","la pressione aumenta continuamente"], sol:2},
+  {top:"Leggi dei gas", q:"Secondo la legge di Boyle, se si diminuisce il volume di un gas a temperatura costante:", opz:["la pressione diminuisce","la pressione aumenta","la temperatura diminuisce","non succede nulla"], sol:1},
+  {top:"Leggi dei gas", q:"Il grafico del volume in funzione della pressione per una trasformazione isoterma è una:", opz:["retta passante per l'origine","iperbole equilatera","circonferenza","parabola"], sol:1},
+  {top:"Leggi dei gas", q:"Secondo la teoria cinetica, la pressione di un gas è legata a:", opz:["al peso del gas","alla frequenza e all'intensità degli urti delle particelle sulle pareti","al colore del gas","solo alla temperatura"], sol:1},
+  {top:"Leggi dei gas", q:"Secondo la teoria cinetica, se si diminuisce il volume del contenitore:", opz:["le particelle urtano le pareti con frequenza minore","le particelle urtano le pareti con frequenza maggiore","le particelle smettono di muoversi","la temperatura del gas diminuisce"], sol:1},
+  {top:"Leggi dei gas", q:"Chi studiò la relazione tra temperatura e volume di un gas?", opz:["Jacques Charles","Robert Boyle","Lavoisier","Cannizzaro"], sol:0},
+  {top:"Leggi dei gas", q:"La legge di Charles vale per una trasformazione:", opz:["isobara","isoterma","isocora","adiabatica"], sol:0},
+  {top:"Leggi dei gas", q:"La legge di Charles afferma che, a pressione costante, il volume di un gas è:", opz:["inversamente proporzionale alla temperatura","direttamente proporzionale alla temperatura assoluta","direttamente proporzionale alla pressione","sempre costante"], sol:1},
+  {top:"Leggi dei gas", q:"La legge di Charles si esprime con la relazione:", opz:["p · V = costante","V/T = costante","p/T = costante","V · T = 0"], sol:1},
+  {top:"Leggi dei gas", q:"Una trasformazione isocora è una trasformazione in cui:", opz:["la temperatura è costante","la pressione è costante","il volume è costante","il volume varia continuamente"], sol:2},
+  {top:"Leggi dei gas", q:"La legge di Gay-Lussac afferma che, a volume costante, la pressione di un gas è:", opz:["inversamente proporzionale alla temperatura","direttamente proporzionale alla temperatura assoluta","direttamente proporzionale al volume","sempre costante"], sol:1},
+  {top:"Leggi dei gas", q:"La legge di Gay-Lussac si esprime con la relazione:", opz:["p/T = costante","V/T = costante","p · V = costante","p · T = costante"], sol:0},
+  {top:"Leggi dei gas", q:"Lo zero assoluto è, per definizione, la temperatura alla quale:", opz:["un gas ha volume e pressione pari a zero","un gas ha la massima pressione possibile","l'acqua bolle","la pressione è massima"], sol:0},
+  {top:"Leggi dei gas", q:"Il valore esatto dello zero assoluto, espresso in gradi Celsius, è:", opz:["−100 °C","−273,15 °C","0 °C","−459,67 °C"], sol:1},
+  {top:"Leggi dei gas", q:"Lo zero assoluto:", opz:["può essere raggiunto facilmente in laboratorio","è un valore teorico che non può essere raggiunto sperimentalmente","corrisponde a 100 K","corrisponde a 273 K"], sol:1},
+  {top:"Leggi dei gas", q:"Secondo la teoria cinetica, la temperatura di un gas è proporzionale a:", opz:["alla massa delle particelle","alla velocità media delle particelle","al volume del contenitore","alla pressione soltanto"], sol:1},
+
+  // ---------- MASSA DEGLI ATOMI ----------
+  {top:"Massa degli atomi", q:"L'ordine di grandezza della massa di un atomo espresso in grammi è compreso tra:", opz:["10⁻⁶ g e 10⁻⁴ g","10⁻²⁴ g e 10⁻²² g","10⁻² g e 10⁻¹ g","10⁻³⁰ g e 10⁻²⁸ g"], sol:1},
+  {top:"Massa degli atomi", q:"Perché la massa degli atomi si esprime in unità di massa atomica (u) invece che in grammi?", opz:["perché i grammi sono una unità obsoleta","perché la massa in grammi è un valore troppo piccolo per essere comodo","perché gli atomi non hanno massa","perché i grammi non sono unità del SI"], sol:1},
+  {top:"Massa degli atomi", q:"La massa atomica assoluta di un atomo è espressa in:", opz:["grammi","u","moli","litri"], sol:0},
+  {top:"Massa degli atomi", q:"Con quale strumento è possibile misurare la massa atomica assoluta?", opz:["con una bilancia da cucina","con lo spettrometro di massa","con il termometro","con il barometro"], sol:1},
+  {top:"Massa degli atomi", q:"Nello spettrometro di massa, gli elementi ad alta temperatura e sotto vuoto:", opz:["diventano gas monoatomici che subiscono ionizzazione","si solidificano","si comprimono","si sciolgono in acqua"], sol:0},
+  {top:"Massa degli atomi", q:"La ionizzazione è:", opz:["la perdita di elettroni, con formazione di ioni positivi","il guadagno di protoni","la divisione del nucleo","la perdita di neutroni"], sol:0},
+  {top:"Massa degli atomi", q:"Nello spettrometro di massa il fascio di ioni viene deviato mediante:", opz:["un campo elettrico","un campo magnetico","la gravità","un fascio di luce"], sol:1},
+  {top:"Massa degli atomi", q:"Nello spettrometro di massa la deviazione subita da uno ione dipende da:", opz:["dal suo colore","dal rapporto tra la sua carica e la sua massa","dalla sua temperatura","dal suo volume"], sol:1},
+  {top:"Massa degli atomi", q:"L'unità di massa atomica unificata (u) è definita come:", opz:["la massa di un atomo di idrogeno","1/12 della massa di un atomo di ¹²C","la massa di un protone","1/10 della massa di un atomo di ossigeno"], sol:1},
+  {top:"Massa degli atomi", q:"Il valore di 1 u è circa:", opz:["1,661 · 10⁻²⁴ g","1,661 · 10⁻²⁴ kg","1,661 · 10⁻¹⁸ g","1,661 · 10⁻³⁰ g"], sol:0},
+  {top:"Massa degli atomi", q:"L'unità di massa atomica è detta anche:", opz:["grammo","dalton (Da)","pascal","kelvin"], sol:1},
+  {top:"Massa degli atomi", q:"Chi nel 1870 determinò con buona precisione la massa atomica relativa di oltre 60 elementi?", opz:["Stanisao Cannizzaro","Amedeo Avogadro","John Dalton","Robert Boyle"], sol:0},
+  {top:"Massa degli atomi", q:"Il metodo di Cannizzaro si basa su:", opz:["la legge di gravitazione","il principio di Avogadro","la legge di Lavoisier","la legge di Boyle"], sol:1},
+  {top:"Massa degli atomi", q:"Il principio di Avogadro afferma che volumi uguali di gas diversi, nelle stesse condizioni di temperatura e pressione, contengono:", opz:["la stessa massa","lo stesso numero di molecole","lo stesso numero di atomi","la stessa densità"], sol:1},
+  {top:"Massa degli atomi", q:"Nel metodo di Cannizzaro la massa di riferimento utilizzata era quella:", opz:["del carbonio","dell'idrogeno","dell'ossigeno","dell'azoto"], sol:1},
+  {top:"Massa degli atomi", q:"Secondo il metodo di Cannizzaro, la massa dell'ossigeno è quante volte quella dell'idrogeno?", opz:["8","12","16","32"], sol:2},
+  {top:"Massa degli atomi", q:"La massa atomica relativa di un elemento è data da:", opz:["il rapporto tra la sua massa atomica assoluta e l'unità di massa atomica","la sua massa atomica assoluta espressa in grammi","la somma delle masse dei suoi isotopi","il suo peso espresso in dalton"], sol:0},
+  {top:"Massa degli atomi", q:"La massa atomica relativa è:", opz:["un numero con unità di misura","un numero puro, senza unità di misura","sempre un numero intero","sempre uguale al numero atomico"], sol:1},
+  {top:"Massa degli atomi", q:"I valori delle masse atomiche riportati nella tavola periodica:", opz:["sono valori esatti riferiti a un solo isotopo","sono valori medi che tengono conto di tutti gli isotopi e delle loro percentuali","sono sempre uguali al numero atomico","sono espressi in grammi"], sol:1},
+  {top:"Massa degli atomi", q:"La massa atomica (MA) dell'ossigeno è circa:", opz:["1 u","8 u","16 u","32 u"], sol:2},
+  {top:"Massa degli atomi", q:"La massa atomica (MA) di un elemento si esprime in:", opz:["grammi","u","kilogrammi","moli"], sol:1},
+  {top:"Massa degli atomi", q:"La differenza di massa tra isotopi di uno stesso elemento è dovuta a:", opz:["al diverso numero di elettroni","al diverso numero di neutroni","al diverso numero di protoni","alla diversa carica"], sol:1},
+  {top:"Massa degli atomi", q:"Nel calcolo della massa con lo spettrometro di massa, al valore misurato si aggiunge:", opz:["la massa dei neutroni","la massa, quasi trascurabile, degli elettroni","la massa dei protoni","la massa dei fotoni"], sol:1},
+  {top:"Massa degli atomi", q:"La massa atomica (MA) dell'idrogeno è:", opz:["1 u","2 u","12 u","16 u"], sol:0},
+  {top:"Massa degli atomi", q:"L'unità di massa atomica:", opz:["è un'unità del Sistema Internazionale","non è un'unità del SI, ma è stata adottata per esprimere la massa atomica","è uguale a 1 g","è uguale a 1 kg"], sol:1},
+
+  // ---------- LA MOLE ----------
+  {top:"La mole", q:"Una mole è:", opz:["la quantità di sostanza che contiene 6,022 · 10²³ particelle","qualsiasi quantità di sostanza","una unità di misura della massa","una unità di misura del volume"], sol:0},
+  {top:"La mole", q:"Il numero di Avogadro (N) è:", opz:["6,022 · 10²³","3,14 · 10²³","1,661 · 10⁻²⁴","9,8 · 10¹"], sol:0},
+  {top:"La mole", q:"La costante di Avogadro (N_A) è:", opz:["6,022 · 10²³ /mol","6,022 · 10²³ mol","6,022 · 10³ /mol","6,022 · 10²⁴ /mol"], sol:0},
+  {top:"La mole", q:"La costante di Avogadro è intitolata a:", opz:["Amedeo Avogadro","Louis Avogadro","Avogadro Einstein","Avogadro Dalton"], sol:0},
+  {top:"La mole", q:"Amedeo Avogadro (1776–1856) fu:", opz:["un chimico torinese","un fisico francese","un chimico inglese","un fisico tedesco"], sol:0},
+  {top:"La mole", q:"Nel Sistema Internazionale la mole è l'unità di misura della:", opz:["massa","quantità di sostanza","volume","temperatura"], sol:1},
+  {top:"La mole", q:"La mole:", opz:["è una delle sette unità di misura fondamentali del SI","è un'unità derivata non fondamentale","non appartiene al SI","è un'unità di lunghezza"], sol:0},
+  {top:"La mole", q:"La massa di una mole di sostanza si chiama:", opz:["massa molecolare","massa molare","massa atomica assoluta","peso formula"], sol:1},
+  {top:"La mole", q:"La massa molare (M) si misura in:", opz:["g","g/mol","u","kg/mol"], sol:1},
+  {top:"La mole", q:"La massa molare di un elemento è numericamente pari alla sua:", opz:["numero atomico","massa atomica","massa molecolare","numero di massa"], sol:1},
+  {top:"La mole", q:"Una mole di atomi di carbonio (MA = 12 u) ha una massa di:", opz:["12 g","12 mg","12 kg","12 u"], sol:0},
+  {top:"La mole", q:"Una mole di atomi di calcio (MA = 40 u) ha una massa di:", opz:["4 g","40 g","400 g","40 u"], sol:1},
+  {top:"La mole", q:"La massa molecolare (MM) di una molecola si calcola:", opz:["sommando le masse atomiche degli atomi che la compongono","prendendo la massa dell'atomo più pesante","sommando i numeri atomici degli atomi","moltiplicando la massa dell'atomo più leggero per il numero di atomi"], sol:0},
+  {top:"La mole", q:"La massa molecolare dell'alcol etilico C₂H₆OH è:", opz:["46,07 u","42,07 u","46,07 g","18,02 u"], sol:0},
+  {top:"La mole", q:"Per i composti ionici, che non sono formati da molecole, si parla di:", opz:["massa molecolare","peso formula","massa molare","massa atomica"], sol:1},
+  {top:"La mole", q:"La massa molare dell'ammoniaca NH₃ (MM = 17,03 u) è:", opz:["17,03 g/mol","17,03 u","17,03 g","1,703 g/mol"], sol:0},
+  {top:"La mole", q:"Una mole di acqua H₂O ha una massa di:", opz:["18 g","2 g","16 g","1 g"], sol:0},
+  {top:"La mole", q:"Una mole di O₂ ha una massa di:", opz:["16 g","32 g","8 g","64 g"], sol:1},
+  {top:"La mole", q:"Una mole di H₂ ha una massa di:", opz:["1 g","2 g","4 g","0,5 g"], sol:1},
+  {top:"La mole", q:"Una mole di atomi di ¹²C ha una massa di:", opz:["12 g","1 g","12 u","6 g"], sol:0},
+  {top:"La mole", q:"La mole viene spesso paragonata a:", opz:["il chilogrammo","la dozzina","il litro","il metro"], sol:1},
+  {top:"La mole", q:"Una mole di saccarosio (C₁₂H₂₂O₁₁) contiene:", opz:["6,022 · 10²³ molecole","6,022 · 10²³ atomi di carbonio","6,022 · 10²³ g","12 molecole"], sol:0},
+  {top:"La mole", q:"Una mole di NH₃ contiene quanti atomi di idrogeno?", opz:["6,022 · 10²³","1,807 · 10²⁴","6,022 · 10²⁴","3 · 10²³"], sol:1},
+  {top:"La mole", q:"Una mole di NH₃ contiene quanti atomi di azoto?", opz:["6,022 · 10²³","1,807 · 10²⁴","2,409 · 10²⁴","6,022 · 10²⁴"], sol:0},
+  {top:"La mole", q:"Una mole di alcol etilico (46 g/mol) rispetto a una mole di acqua (18 g/mol):", opz:["pesa esattamente uguale","pesa più del doppio","pesa meno","pesa esattamente il doppio"], sol:1},
+
+  // ---------- CONTARE PER MOLI ----------
+  {top:"Contare per moli", q:"Il numero di moli (n) di un campione si calcola dalla sua massa con la formula:", opz:["n = m · M","n = m/M","n = M/m","n = m + M"], sol:1},
+  {top:"Contare per moli", q:"La massa (m) di un campione si calcola dal numero di moli con la formula:", opz:["m = n/M","m = M/n","m = n · M","m = n + M"], sol:2},
+  {top:"Contare per moli", q:"Il numero di particelle (N_p) di un campione si calcola con la formula:", opz:["N_p = n · N_A","N_p = n/N_A","N_p = N_A/n","N_p = n + N_A"], sol:0},
+  {top:"Contare per moli", q:"Il numero di moli (n) si ricava dal numero di particelle con la formula:", opz:["n = N_p · N_A","n = N_p/N_A","n = N_A/N_p","n = N_p − N_A"], sol:1},
+  {top:"Contare per moli", q:"Quante moli sono contenute in 100 g di HCl (M = 36,5 g/mol)?", opz:["2,74 mol","3,65 mol","0,365 mol","10 mol"], sol:0},
+  {top:"Contare per moli", q:"La massa molecolare dell'HCl è:", opz:["36,5 u","1 u","35,5 u","37,5 u"], sol:0},
+  {top:"Contare per moli", q:"2 moli di una sostanza contengono quante particelle?", opz:["6,022 · 10²³","1,2044 · 10²⁴","3,011 · 10²³","1,2044 · 10²³"], sol:1},
+  {top:"Contare per moli", q:"Mezza mole (0,5 mol) contiene quante particelle?", opz:["6,022 · 10²³","3,011 · 10²³","1,2044 · 10²⁴","1,5055 · 10²³"], sol:1},
+  {top:"Contare per moli", q:"Nelle equazioni chimiche i coefficienti numerici davanti alle formule indicano anche:", opz:["il numero di moli di ciascuna sostanza coinvolta","il colore delle sostanze","la temperatura della reazione","la massa del recipiente"], sol:0},
+  {top:"Contare per moli", q:"Nella reazione 2 H₂ + O₂ → 2 H₂O il rapporto tra H₂ e O₂ che reagiscono è:", opz:["1 : 1","2 : 1","1 : 2","4 : 1"], sol:1},
+  {top:"Contare per moli", q:"Per formare 2 moli di acqua quante moli di O₂ sono necessarie?", opz:["2","1","4","0,5"], sol:1},
+  {top:"Contare per moli", q:"Da 4,04 g di H₂ e 32,00 g di O₂ che reagiscono completamente si ottengono di H₂O:", opz:["36,04 g","32,00 g","4,04 g","18,02 g"], sol:0},
+  {top:"Contare per moli", q:"La massa molare dell'acqua H₂O è circa:", opz:["18,02 g/mol","16 g/mol","2,02 g/mol","10 g/mol"], sol:0},
+  {top:"Contare per moli", q:"La massa molare dell'ossigeno O₂ è:", opz:["16 g/mol","32 g/mol","8 g/mol","64 g/mol"], sol:1},
+  {top:"Contare per moli", q:"Quante moli sono contenute in 100 g di H₂O (M = 18,02 g/mol)?", opz:["5,55 mol","18 mol","0,0555 mol","0,18 mol"], sol:0},
+  {top:"Contare per moli", q:"A quante moli corrispondono 3,4 · 10²³ molecole?", opz:["0,56 mol","3,4 mol","6,022 mol","0,034 mol"], sol:0},
+  {top:"Contare per moli", q:"A quante moli corrispondono 1,807 · 10²⁴ atomi di ferro?", opz:["3 mol","1 mol","6 mol","0,5 mol"], sol:0},
+  {top:"Contare per moli", q:"2,7 moli di glucosio (C₆H₁₂O₆) contengono quante molecole?", opz:["2,7 · 6,022 · 10²³ ≈ 1,626 · 10²⁴","2,7 · 10²³","6,022 · 10²³","1,626 · 10²³"], sol:0},
+  {top:"Contare per moli", q:"La massa molecolare dell'acido nitrico HNO₃ è:", opz:["63 u","48 u","45 u","64 u"], sol:0},
+  {top:"Contare per moli", q:"La massa molare dell'acido nitrico HNO₃ è:", opz:["63 g/mol","63 u","48 g/mol","45 g/mol"], sol:0},
+  {top:"Contare per moli", q:"Una mole di HNO₃ contiene quanti atomi di ossigeno?", opz:["6,022 · 10²³","1,807 · 10²⁴","6,022 · 10²⁴","2,409 · 10²⁴"], sol:1},
+  {top:"Contare per moli", q:"La massa di 5 moli di CaCO₃ (M = 100 g/mol) è:", opz:["500 g","20 g","100 g","5 g"], sol:0},
+  {top:"Contare per moli", q:"La massa molare del carbonato di calcio CaCO₃ è circa:", opz:["100 g/mol","50 g/mol","150 g/mol","120 g/mol"], sol:0},
+  {top:"Contare per moli", q:"Prima di eseguire una reazione si calcola la quantità di reagenti necessaria per:", opz:["aumentare il costo della reazione","produrre la giusta quantità di prodotti e evitare sprechi","riscaldare il sistema","misurare la pressione del recipiente"], sol:1},
+  {top:"Contare per moli", q:"Utilizzare una quantità eccessiva di un reagente comporta che:", opz:["aumenta la quantità di prodotto","una parte di esso rimanga inutilizzata nella reazione","la reazione acceleri indefinitamente","diminuisca lo spreco degli altri reagenti"], sol:1}
+];
+
+/* ================================================================
+   LOGICA DEL QUIZ
+   ================================================================ */
+const N_SESSIONE = 10;
+const LETTERE = ["A","B","C","D"];
+
+let sessione = [];      // domande della sessione (con opzioni mescolate)
+let risposte = [];      // indice scelto per ogni domanda
+let corrente = 0;
+
+const $ = id => document.getElementById(id);
+
+function mescola(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function nuovaSessione(){
+  const scelte = mescola(DOMANDE).slice(0, N_SESSIONE);
+  sessione = scelte.map(d=>{
+    const indiceOpz = d.opz.map((_,i)=>i);
+    const nuovoOrdine = mescola(indiceOpz);
+    return {
+      top: d.top,
+      q: d.q,
+      opz: nuovoOrdine.map(i=>d.opz[i]),
+      sol: nuovoOrdine.indexOf(d.sol)
+    };
+  });
+  risposte = new Array(N_SESSIONE).fill(-1);
+  corrente = 0;
+}
+
+function mostraSchermo(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  $(id).classList.add("active");
+}
+
+function buildNavbar(){
+  const nav = $("navbar");
+  nav.innerHTML = "";
+  const prev = document.createElement("button");
+  prev.className = "nav-arrow"; prev.textContent = "‹";
+  prev.disabled = corrente === 0;
+  prev.onclick = ()=>{ if(corrente>0){ corrente--; renderDomanda(); } };
+  nav.appendChild(prev);
+
+  for(let i=0;i<N_SESSIONE;i++){
+    const n = document.createElement("div");
+    n.className = "nav-num" + (i===corrente?" current":"") + (risposte[i]!==-1?" answered":"");
+    n.textContent = i+1;
+    n.onclick = ()=>{ corrente=i; renderDomanda(); };
+    nav.appendChild(n);
+  }
+
+  const next = document.createElement("button");
+  next.className = "nav-arrow"; next.textContent = "›";
+  next.disabled = corrente === N_SESSIONE-1;
+  next.onclick = ()=>{ if(corrente<N_SESSIONE-1){ corrente++; renderDomanda(); } };
+  nav.appendChild(next);
+}
+
+function renderDomanda(){
+  const d = sessione[corrente];
+  $("qTitle").textContent = d.top;
+  $("qText").textContent = d.q;
+  $("qCount").textContent = `Domanda ${corrente+1} di ${N_SESSIONE}`;
+
+  const opts = $("qOpts");
+  opts.innerHTML = "";
+  d.opz.forEach((opz,i)=>{
+    const row = document.createElement("div");
+    row.className = "opt" + (risposte[corrente]===i ? " selected":"");
+    row.innerHTML = `
+      <span class="letter">${LETTERE[i]}.</span>
+      <input type="radio" name="opz" id="opz${i}" ${risposte[corrente]===i?"checked":""}>
+      <label for="opz${i}">${opz}</label>`;
+    row.onclick = ()=>{
+      risposte[corrente] = i;
+      renderDomanda();
+    };
+    opts.appendChild(row);
+  });
+
+  const btn = $("btnNext");
+  if(corrente === N_SESSIONE-1){
+    btn.textContent = "Concludi il test ✔";
+    btn.onclick = ()=>{
+      const nonRisp = risposte.indexOf(-1);
+      if(nonRisp !== -1){
+        if(confirm(`Hai ${risposte.filter(r=>r===-1).length} domanda/e senza risposta. Vuoi concludere comunque?`)){
+          terminaTest();
+        }
+      } else {
+        terminaTest();
+      }
+    };
+  } else {
+    btn.textContent = "Avanti →";
+    btn.onclick = ()=>{
+      if(risposte[corrente]===-1){
+        if(!confirm("Non hai risposto a questa domanda. Continuare?")) return;
+      }
+      corrente++;
+      renderDomanda();
+    };
+  }
+
+  buildNavbar();
+
+  const fatte = risposte.filter(r=>r!==-1).length;
+  $("progressFill").style.width = (fatte/N_SESSIONE*100)+"%";
+}
+
+function terminaTest(){
+  let corrette = 0;
+  sessione.forEach((d,i)=>{ if(risposte[i]===d.sol) corrette++; });
+  const voto = corrette;
+
+  $("scoreBig").textContent = voto.toFixed(1);
+  $("scoreCount").textContent = corrette;
+
+  const v = $("verdict");
+  if(voto >= 8){ v.textContent = "Ottimo lavoro! 🎉"; v.className="verdict good"; }
+  else if(voto >= 6){ v.textContent = "Buon risultato, quasi ce l'hai! 👍"; v.className="verdict mid"; }
+  else if(voto >= 4){ v.textContent = "C'è da ripassare un po'. 📖"; v.className="verdict mid"; }
+  else { v.textContent = "Non scoraggiarti: ripassiamo insieme! 💪"; v.className="verdict bad"; }
+
+  const errList = $("listErrors");
+  const okList = $("listOk");
+  errList.innerHTML = "";
+  okList.innerHTML = "";
+
+  const errori = [];
+  const corretteQ = [];
+  sessione.forEach((d,i)=>{
+    if(risposte[i]===d.sol) corretteQ.push(i);
+    else errori.push(i);
+  });
+
+  if(errori.length === 0){
+    errList.innerHTML = `<div style="background:var(--green-bg);border:1px solid #a5d6a7;border-radius:8px;padding:16px;color:var(--green);font-weight:600;text-align:center;">🎉 Perfetto! Nessuna domanda errata.</div>`;
+  } else {
+    errori.forEach(i=>{
+      const d = sessione[i];
+      const el = document.createElement("div");
+      el.className = "res-q";
+      let chosenHtml = "";
+      if(risposte[i] === -1){
+        chosenHtml = `<div class="rq-ans chosen-wrong"><span class="tag">Tua</span>Nessuna risposta</div>`;
+      } else {
+        chosenHtml = `<div class="rq-ans chosen-wrong"><span class="tag">Tua</span>✗ ${LETTERE[risposte[i]]}. ${d.opz[risposte[i]]}</div>`;
+      }
+      el.innerHTML = `
+        <div class="rq-top">
+          <span class="rq-num">Domanda ${i+1} — ${d.top}</span>
+          <span class="badge err">ERRATA</span>
+        </div>
+        <div class="rq-text">${d.q}</div>
+        ${chosenHtml}
+        <div class="rq-ans correct"><span class="tag">Corretta</span>✔ ${LETTERE[d.sol]}. ${d.opz[d.sol]}</div>`;
+      errList.appendChild(el);
+    });
+  }
+
+  corretteQ.forEach(i=>{
+    const d = sessione[i];
+    const el = document.createElement("div");
+    el.className = "res-q ok";
+    el.innerHTML = `
+      <div class="rq-top">
+        <span class="rq-num">Domanda ${i+1} — ${d.top}</span>
+        <span class="badge ok">CORRETTA</span>
+      </div>
+      <div class="rq-text">${d.q}</div>
+      <div class="rq-ans correct"><span class="tag">Tua</span>✔ ${LETTERE[risposte[i]]}. ${d.opz[risposte[i]]}</div>`;
+    okList.appendChild(el);
+  });
+
+  $("btnToggleOk").style.display = corretteQ.length>0 ? "inline" : "none";
+
+  mostraSchermo("screenResults");
+  $("navbar").style.display = "none";
+  $("progressWrap").style.display = "none";
+  $("btnExit").style.display = "inline-block";
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+$("btnStart").onclick = ()=>{
+  nuovaSessione();
+  mostraSchermo("screenQuiz");
+  $("navbar").style.display = "flex";
+  $("progressWrap").style.display = "block";
+  $("btnExit").style.display = "inline-block";
+  renderDomanda();
+};
+
+$("btnRetry").onclick = ()=>{
+  nuovaSessione();
+  mostraSchermo("screenQuiz");
+  $("navbar").style.display = "flex";
+  $("progressWrap").style.display = "block";
+  $("btnExit").style.display = "inline-block";
+  renderDomanda();
+};
+
+$("btnExit").onclick = ()=>{
+  mostraSchermo("screenStart");
+  $("navbar").style.display = "none";
+  $("progressWrap").style.display = "none";
+  $("btnExit").style.display = "none";
+};
+
+$("btnToggleOk").onclick = ()=>{
+  const results = document.querySelector(".results");
+  results.classList.toggle("show-ok");
+};
+
+console.log("Domande nella banca:", DOMANDE.length);
+</script>
+</body>
+</html>

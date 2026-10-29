@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz — Le Particelle della Materia</title>
+<style>
+  :root{
+    --blue:#1565c0;
+    --blue-dark:#0d47a1;
+    --blue-light:#e3f2fd;
+    --bg:#f4f6f8;
+    --border:#d9dee3;
+    --green:#2e7d32;
+    --green-bg:#e8f5e9;
+    --red:#c62828;
+    --red-bg:#ffebee;
+    --gray:#6b7280;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:'Segoe UI', Roboto, Arial, sans-serif;
+    background:var(--bg); color:#1f2937;
+    min-height:100vh; display:flex; flex-direction:column; align-items:center;
+  }
+  .app{
+    width:100%; max-width:900px; margin:24px auto;
+    background:#fff; border-radius:12px;
+    box-shadow:0 4px 20px rgba(0,0,0,.08);
+    overflow:hidden;
+  }
+  /* ---------- header ---------- */
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 16px; background:#fff; border-bottom:1px solid var(--border);
+  }
+  .topbar .logo{font-weight:700; color:var(--blue); font-size:1.05rem;}
+  .topbar .logo span{color:#c62828;}
+  .btn{
+    background:var(--blue); color:#fff; border:none; border-radius:8px;
+    padding:10px 20px; font-size:.95rem; font-weight:600; cursor:pointer;
+    transition:background .15s;
+  }
+  .btn:hover{background:var(--blue-dark);}
+  .btn.secondary{background:#fff; color:var(--blue); border:2px solid var(--blue);}
+  .btn.secondary:hover{background:var(--blue-light);}
+  .btn:disabled{opacity:.4; cursor:not-allowed;}
+
+  /* ---------- nav numbers ---------- */
+  .navbar{
+    display:flex; align-items:center; background:#eef1f5;
+    border-bottom:1px solid var(--border); padding:0 8px;
+    overflow-x:auto;
+  }
+  .nav-arrow{
+    background:none; border:none; font-size:1.4rem; color:var(--blue);
+    cursor:pointer; padding:10px 14px; flex-shrink:0;
+  }
+  .nav-arrow:disabled{color:#bbb; cursor:default;}
+  .nav-num{
+    flex:1; text-align:center; padding:12px 4px; cursor:pointer;
+    color:var(--blue); font-weight:700; font-size:1rem; position:relative;
+    user-select:none; min-width:38px;
+  }
+  .nav-num.answered{color:var(--green);}
+  .nav-num.current{color:var(--blue-dark); font-size:1.15rem;}
+  .nav-num.current::after{
+    content:""; position:absolute; left:25%; right:25%; bottom:0;
+    height:3px; background:var(--blue); border-radius:2px;
+  }
+  .nav-num.answered.current{color:var(--blue-dark);}
+
+  /* ---------- question ---------- */
+  .qbody{padding:28px 32px 40px; min-height:340px;}
+  .qtitle{font-size:1.3rem; font-weight:700; margin-bottom:18px; color:#111;}
+  .qtext{font-size:1.05rem; margin-bottom:26px; line-height:1.5;}
+  .opts{display:flex; flex-direction:column; gap:14px;}
+  .opt{
+    display:flex; align-items:center; gap:14px;
+    border:1px solid var(--border); border-radius:8px;
+    padding:14px 16px; cursor:pointer; transition:all .15s;
+  }
+  .opt:hover{background:var(--blue-light); border-color:var(--blue);}
+  .opt.selected{border-color:var(--blue); background:var(--blue-light); box-shadow:0 0 0 1px var(--blue);}
+  .opt .letter{font-weight:700; width:20px; color:#333;}
+  .opt input{accent-color:var(--blue); width:18px; height:18px; cursor:pointer;}
+  .opt label{flex:1; cursor:pointer;}
+  .qfooter{
+    display:flex; justify-content:space-between; align-items:center;
+    margin-top:34px;
+  }
+  .qcount{color:var(--gray); font-size:.9rem;}
+  .progress-wrap{
+    height:6px; background:#e5e9ee; width:100%;
+  }
+  .progress-fill{height:100%; background:var(--blue); width:0%; transition:width .3s;}
+
+  /* ---------- screens ---------- */
+  .screen{display:none;}
+  .screen.active{display:block;}
+
+  /* ---------- start screen ---------- */
+  .start{
+    padding:60px 40px; text-align:center;
+  }
+  .start .icon{font-size:4rem; margin-bottom:16px;}
+  .start h1{font-size:1.9rem; margin-bottom:12px; color:#111;}
+  .start p{color:var(--gray); margin-bottom:8px; font-size:1rem; line-height:1.6;}
+  .start .info-box{
+    background:var(--blue-light); border:1px solid #bbdefb; border-radius:10px;
+    padding:16px 20px; margin:24px auto; max-width:440px; text-align:left;
+    color:#0d47a1; font-size:.95rem; line-height:1.6;
+  }
+  .start .btn{margin-top:26px; font-size:1.1rem; padding:14px 40px;}
+
+  /* ---------- results ---------- */
+  .results{padding:32px;}
+  .score-card{
+    display:flex; align-items:center; justify-content:center; gap:28px;
+    background:linear-gradient(135deg,#e3f2fd,#f4f9ff);
+    border:1px solid #bbdefb; border-radius:14px;
+    padding:28px; margin-bottom:28px; flex-wrap:wrap;
+  }
+  .score-big{font-size:3.2rem; font-weight:800; color:var(--blue-dark); line-height:1;}
+  .score-detail{font-size:1.05rem; color:#334155; text-align:left;}
+  .score-detail b{font-size:1.25rem;}
+  .verdict{font-size:1.1rem; font-weight:700; margin-top:4px;}
+  .verdict.good{color:var(--green);}
+  .verdict.mid{color:#b26a00;}
+  .verdict.bad{color:var(--red);}
+
+  .results h2{font-size:1.15rem; margin:22px 0 14px; color:#111;}
+  .res-q{
+    border:1px solid var(--border); border-left:4px solid var(--red);
+    border-radius:8px; padding:16px 18px; margin-bottom:14px; background:#fff;
+  }
+  .res-q.ok{border-left-color:var(--green);}
+  .res-q .rq-top{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .res-q .rq-num{font-weight:700; color:var(--blue);}
+  .res-q .badge{
+    font-size:.75rem; font-weight:700; padding:3px 10px; border-radius:20px;
+  }
+  .badge.err{background:var(--red-bg); color:var(--red);}
+  .badge.ok{background:var(--green-bg); color:var(--green);}
+  .res-q .rq-text{font-weight:600; margin-bottom:10px; line-height:1.45;}
+  .res-q .rq-ans{font-size:.93rem; margin-bottom:5px;}
+  .rq-ans.chosen-wrong{color:var(--red); font-weight:600;}
+  .rq-ans.correct{color:var(--green); font-weight:600;}
+  .rq-ans .tag{
+    display:inline-block; font-size:.7rem; font-weight:700; text-transform:uppercase;
+    letter-spacing:.5px; margin-right:6px; opacity:.85;
+  }
+  .res-actions{display:flex; gap:12px; justify-content:center; margin-top:28px; flex-wrap:wrap;}
+  .only-errors{display:none;}
+  .show-ok .only-errors{display:none;}
+  .show-ok .show-ok-toggle{display:none;}
+  .show-ok-toggle{
+    background:none; border:none; color:var(--blue); cursor:pointer;
+    font-size:.9rem; margin:8px 0 4px; text-decoration:underline; padding:4px;
+  }
+  footer{text-align:center; color:#9aa4af; font-size:.8rem; margin:18px 0 30px;}
+
+  @media (max-width:560px){
+    .qbody{padding:20px 16px 30px;}
+    .score-big{font-size:2.4rem;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="logo">📚 Quiz <span>Le Particelle della Materia</span></div>
+    <button class="btn secondary" id="btnExit" style="display:none;">← Esci</button>
+  </div>
+
+  <!-- NAVBAR -->
+  <div class="navbar" id="navbar" style="display:none;"></div>
+  <div class="progress-wrap" id="progressWrap" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- START SCREEN -->
+  <div class="screen active" id="screenStart">
+    <div class="start">
+      <div class="icon">⚛️</div>
+      <h1>Quiz di Chimica — Le Particelle della Materia</h1>
+      <p>Teoria atomica, particelle subatomiche, struttura dell'atomo,<br>isotopi e legami chimici.</p>
+      <div class="info-box">
+        📝 Verranno estratte <b>10 domande</b> a caso da una banca di <b>100 domande</b>.<br>
+        ✍️ Rispondi a tutte: alla fine vedrai il <b>voto in decimi</b> e le domande errate da ripassare.
+      </div>
+      <button class="btn" id="btnStart">Inizia il test ▶</button>
+    </div>
+  </div>
+
+  <!-- QUIZ SCREEN -->
+  <div class="screen" id="screenQuiz">
+    <div class="qbody">
+      <div class="qtitle" id="qTitle"></div>
+      <div class="qtext" id="qText"></div>
+      <div class="opts" id="qOpts"></div>
+      <div class="qfooter">
+        <span class="qcount" id="qCount"></span>
+        <button class="btn" id="btnNext">Avanti →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULTS SCREEN -->
+  <div class="screen" id="screenResults">
+    <div class="results">
+      <div class="score-card">
+        <div class="score-big" id="scoreBig">–</div>
+        <div class="score-detail">
+          <div>Voto in decimi</div>
+          <div><b id="scoreCount">–</b> risposte corrette su 10</div>
+          <div class="verdict" id="verdict"></div>
+        </div>
+      </div>
+
+      <h2>❌ Domande da ripassare</h2>
+      <div id="listErrors"></div>
+
+      <button class="show-ok-toggle" id="btnToggleOk">Mostra anche le risposte corrette ↓</button>
+      <div id="listOk" class="only-errors"></div>
+
+      <div class="res-actions">
+        <button class="btn" id="btnRetry">🔄 Nuova sessione (10 domande nuove)</button>
+        <button class="btn secondary" onclick="location.href='index.html'">🏠 Torna all'indice</button>
+      </div>
+    </div>
+  </div>
+</div>
+<footer>Studio interattivo · Unità C4 — Le Particelle della Materia</footer>
+
+<script>
+/* ================================================================
+   BANCA DOMANDE — 100 domande
+   Formato: { top: argomento, q: testo, opz: [4 opzioni], sol: indice corretto }
+   ================================================================ */
+const DOMANDE = [
+  // ---------- TEORIA ATOMICA ----------
+  {top:"Teoria atomica", q:"Chi propose la teoria atomica moderna nel 1808?", opz:["John Dalton","Democrito","Aristotele","Lavoisier"], sol:0},
+  {top:"Teoria atomica", q:"Secondo Dalton, l'atomo è:", opz:["divisibile all'infinito","la particella più piccola dell'elemento, indivisibile","formato solo da elettroni","sempre carico positivamente"], sol:1},
+  {top:"Teoria atomica", q:"Secondo la teoria di Dalton, gli atomi dello stesso elemento:", opz:["sono tutti diversi tra loro","sono identici per massa e proprietà","cambiano forma continuamente","sono sempre carichi"], sol:1},
+  {top:"Teoria atomica", q:"Secondo Dalton, un composto è:", opz:["un singolo atomo","una combinazione di atomi di elementi diversi in rapporto fisso","una miscela di atomi","un insieme di molecole identiche"], sol:1},
+  {top:"Teoria atomica", q:"Secondo Dalton, in una reazione chimica gli atomi:", opz:["vengono creati da zero","vengono distrutti","si riorganizzano senza essere creati o distrutti","cambiano elemento"], sol:2},
+  {top:"Teoria atomica", q:"La teoria atomica di Dalton fu proposta nell'anno:", opz:["1808","1600","1900","1750"], sol:0},
+  {top:"Teoria atomica", q:"La teoria atomica di Dalton spiega in modo coerente:", opz:["l'esistenza degli isotopi","le leggi ponderali (conservazione della massa e proporzioni definite)","la radioattività","la struttura del nucleo"], sol:1},
+  {top:"Teoria atomica", q:"Quale di questi NON è spiegabile con la teoria atomica di Dalton?", opz:["la conservazione della massa","l'esistenza degli isotopi","le proporzioni definite","le proporzioni multiple"], sol:1},
+  {top:"Teoria atomica", q:"Democrito ipotizzò l'esistenza dell'atomo:", opz:["con esperimenti di laboratorio","in modo filosofico, senza prove sperimentali","usando il microscopio","misurando la massa"], sol:1},
+  {top:"Teoria atomica", q:"La teoria atomica moderna supera quella di Dalton perché:", opz:["nega l'esistenza dell'atomo","ammette che l'atomo è divisibile in particelle più piccole","afferma che l'atomo è indivisibile","nega le reazioni chimiche"], sol:1},
+
+  // ---------- LEGGI PONDERALI ----------
+  {top:"Leggi ponderali", q:"La legge di Lavoisier afferma che, in una reazione chimica:", opz:["la massa si crea","la massa totale si conserva","la massa aumenta","la massa diminuisce"], sol:1},
+  {top:"Teoria atomica", q:"Chi formulò la legge di conservazione della massa?", opz:["Lavoisier","Dalton","Proust","Gay-Lussac"], sol:0},
+  {top:"Leggi ponderali", q:"La legge di Proust (proporzioni definite) afferma che:", opz:["gli elementi si combinano in rapporti di massa costanti","gli elementi si combinano in rapporti variabili","la massa non si conserva","gli atomi si creano"], sol:0},
+  {top:"Leggi ponderali", q:"La legge di Dalton (proporzioni multiple) afferma che due elementi possono formare più composti in rapporti di massa che sono:", opz:["numeri casuali","numeri interi piccoli","sempre uguali","sempre frazionari"], sol:1},
+  {top:"Leggi ponderali", q:"Le leggi 'ponderali' della chimica riguardano:", opz:["il volume dei gas","la massa delle sostanze","il colore dei composti","la temperatura"], sol:1},
+  {top:"Leggi ponderali", q:"Se 12 g di carbonio reagiscono con 8 g di ossigeno, la massa del composto formato è:", opz:["12 g","8 g","20 g","2 g"], sol:2},
+  {top:"Leggi ponderali", q:"La legge di Lavoisier è anche chiamata legge di:", opz:["conservazione della massa","proporzioni multiple","proporzioni definite","azione di massa"], sol:0},
+  {top:"Leggi ponderali", q:"La legge di Proust è anche chiamata legge delle:", opz:["proporzioni multiple","proporzioni definite","proporzioni inverse","proporzioni variabili"], sol:1},
+  {top:"Leggi ponderali", q:"Nella CO il rapporto massa C : massa O è 12:16; nella CO₂ è 12:32. Questo è un esempio della legge delle:", opz:["proporzioni definite","proporzioni multiple","proporzioni inverse","proporzioni casuali"], sol:1},
+  {top:"Leggi ponderali", q:"Secondo la legge di Lavoisier, la massa totale dei reagenti è:", opz:["maggiore di quella dei prodotti","minore di quella dei prodotti","uguale a quella dei prodotti","indipendente da quella dei prodotti"], sol:2},
+
+  // ---------- PROPRIETÀ MACRO/MICRO ----------
+  {top:"Proprietà macro/micro", q:"Le proprietà macroscopiche della materia sono quelle:", opz:["osservabili a occhio nudo o con strumenti semplici","visibili solo al microscopio elettronico","che riguardano gli elettroni","che riguardano il nucleo"], sol:0},
+  {top:"Proprietà macro/micro", q:"Le proprietà microscopiche della materia riguardano:", opz:["la massa e il volume","la disposizione e il legame delle particelle","il colore","il sapore"], sol:1},
+  {top:"Proprietà macro/micro", q:"Quale di queste è una proprietà macroscopica?", opz:["tipo di legame chimico","densità","numero di elettroni","carica del nucleo"], sol:1},
+  {top:"Proprietà macro/micro", q:"Quale di queste è una proprietà microscopica?", opz:["volume","massa","tipo di legame tra le particelle","densità"], sol:2},
+  {top:"Proprietà macro/micro", q:"Massa, volume e densità sono proprietà:", opz:["microscopiche","macroscopiche","quantistiche","nucleari"], sol:1},
+  {top:"Proprietà macro/micro", q:"Le proprietà microscopiche si studiano:", opz:["con modelli e strumenti (es. microscopi)","pesando il campione","misurando il volume","osservando il colore"], sol:0},
+  {top:"Proprietà macro/micro", q:"La densità di una sostanza è una proprietà:", opz:["macroscopica","microscopica","nucleare","elettromagnetica"], sol:0},
+  {top:"Proprietà macro/micro", q:"Il tipo di legame che tiene insieme le particelle è una proprietà:", opz:["macroscopica","microscopica","ponderale","termica"], sol:1},
+
+  // ---------- PARTICELLE SUBATOMICHE ----------
+  {top:"Particelle subatomiche", q:"L'elettrone ha carica:", opz:[">0 (positiva)","−1 (negativa)","0 (neutra)","+2"], sol:1},
+  {top:"Particelle subatomiche", q:"Il protone ha carica:", opz:[">0 (positiva, +1)","negativa","neutra","doppia negativa"], sol:0},
+  {top:"Particelle subatomiche", q:"Il neutrone ha carica:", opz:["positiva","negativa","neutra (0)","doppia positiva"], sol:2},
+  {top:"Particelle subatomiche", q:"L'elettrone si trova:", opz:["nel nucleo","nella nuvola elettronica, fuori dal nucleo","al centro dell'atomo","fuori dall'atomo"], sol:1},
+  {top:"Particelle subatomiche", q:"Protone e neutrone si trovano:", opz:["nella nuvola elettronica","nel nucleo","fuori dall'atomo","sulla superficie"], sol:1},
+  {top:"Particelle subatomiche", q:"La massa dell'elettrone è circa:", opz:["uguale a quella del protone","1/1836 di quella del protone","il doppio di quella del protone","10 volte quella del neutrone"], sol:1},
+  {top:"Particelle subatomiche", q:"Quale particella ha la massa più piccola?", opz:["il protone","il neutrone","l'elettrone","tutte uguali"], sol:2},
+  {top:"Particelle subatomiche", q:"Protone e neutrone hanno massa:", opz:["molto diversa","circa uguale (≈ 1 u)","l'elettrone è più pesante","il protone è il più leggero"], sol:1},
+  {top:"Particelle subatomiche", q:"In un atomo neutro il numero di elettroni è:", opz:["maggiore di quello dei protoni","uguale a quello dei protoni","minore di quello dei protoni","uguale a quello dei neutroni"], sol:1},
+  {top:"Particelle subatomiche", q:"L'elettrone fu scoperto da:", opz:["J.J. Thomson","Rutherford","Chadwick","Dalton"], sol:0},
+  {top:"Particelle subatomiche", q:"Il protone fu scoperto da:", opz:["Rutherford","Thomson","Chadwick","Lavoisier"], sol:0},
+  {top:"Particelle subatomiche", q:"Il neutrone fu scoperto da:", opz:["Chadwick","Thomson","Rutherford","Dalton"], sol:0},
+  {top:"Particelle subatomiche", q:"Il nucleo dell'atomo è:", opz:["grande e leggero","piccolo, denso e contiene quasi tutta la massa","assente","sempre carico negativamente"], sol:1},
+  {top:"Particelle subatomiche", q:"La maggior parte dell'atomo è:", opz:["materia solida","spazio vuoto","carica positiva","nucleo"], sol:1},
+  {top:"Particelle subatomiche", q:"La particella che determina la carica complessiva dell'atomo (insieme ai protoni) è:", opz:["il neutrone","l'elettrone","il fotone","il quark"], sol:1},
+
+  // ---------- STRUTTURA DELL'ATOMO ----------
+  {top:"Struttura dell'atomo", q:"Il numero atomico Z è:", opz:["il numero di neutroni","il numero di protoni","il numero di elettroni","la somma di protoni e neutroni"], sol:1},
+  {top:"Struttura dell'atomo", q:"Il numero di massa A è:", opz:["il numero di protoni","la somma di protoni e neutroni","il numero di elettroni","il numero di isotopi"], sol:1},
+  {top:"Struttura dell'atomo", q:"Il numero di neutroni si calcola come:", opz:["Z + A","A − Z","Z − A","A × Z"], sol:1},
+  {top:"Struttura dell'atomo", q:"Il numero atomico Z identifica in modo univoco:", opz:["l'isotopo","l'elemento","la molecola","l'ione"], sol:1},
+  {top:"Struttura dell'atomo", q:"Un atomo con Z = 6 è:", opz:["ossigeno","carbonio","azoto","idrogeno"], sol:1},
+  {top:"Struttura dell'atomo", q:"Un atomo con Z = 8 è:", opz:["carbonio","azoto","ossigeno","neon"], sol:2},
+  {top:"Struttura dell'atomo", q:"Un atomo con Z = 1 è:", opz:["elio","idrogeno","litio","carbonio"], sol:1},
+  {top:"Struttura dell'atomo", q:"Un atomo con Z = 11 è:", opz:["magnesio","sodio","neon","cloro"], sol:1},
+  {top:"Struttura dell'atomo", q:"Un atomo con A = 23 e Z = 11 ha quanti neutroni?", opz:["11","12","23","34"], sol:1},
+  {top:"Struttura dell'atomo", q:"Un atomo con A = 16 e Z = 8 ha quanti neutroni?", opz:["8","16","24","6"], sol:0},
+  {top:"Struttura dell'atomo", q:"Un atomo con Z = 7 e A = 14 ha quanti neutroni?", opz:["7","14","21","28"], sol:0},
+  {top:"Struttura dell'atomo", q:"Un atomo con 6 protoni, 6 neutroni e 6 elettroni ha numero di massa A =", opz:["6","12","18","24"], sol:1},
+  {top:"Struttura dell'atomo", q:"Se un atomo ha Z = 17, ha quanti elettroni se è neutro?", opz:["16","17","18","34"], sol:1},
+  {top:"Struttura dell'atomo", q:"Il numero atomico di un elemento corrisponde a:", opz:["la sua massa","il numero di protoni nel nucleo","il numero di isotopi","la sua densità"], sol:1},
+
+  // ---------- ISOTOPI ----------
+  {top:"Isotopi", q:"Gli isotopi di uno stesso elemento hanno lo stesso:", opz:["numero di massa","numero di protoni","numero di neutroni","numero di massa e neutroni"], sol:1},
+  {top:"Isotopi", q:"Gli isotopi di uno stesso elemento differiscono per:", opz:["numero di protoni","numero di elettroni","numero di neutroni","carica complessiva"], sol:2},
+  {top:"Isotopi", q:"Gli isotopi di un elemento hanno praticamente le stesse:", opz:["proprietà chimiche","proprietà nucleari","masse","cariche"], sol:0},
+  {top:"Isotopi", q:"Un esempio di isotopi è:", opz:["H₂ e O₂","carbonio-12, carbonio-13, carbonio-14","Na e Cl","H₂O e H₂O₂"], sol:1},
+  {top:"Isotopi", q:"Il carbonio-14 ha quanti protoni e quanti neutroni?", opz:["6 protoni e 14 neutroni","6 protoni e 8 neutroni","14 protoni e 6 neutroni","7 protoni e 7 neutroni"], sol:1},
+  {top:"Isotopi", q:"Il carbonio-12 ha quanti neutroni?", opz:["6","12","18","0"], sol:0},
+  {top:"Isotopi", q:"Il carbonio-13 ha quanti neutroni?", opz:["6","7","13","19"], sol:1},
+  {top:"Isotopi", q:"Gli isotopi dello stesso elemento hanno lo stesso Z perché:", opz:["hanno lo stesso numero di massa","hanno lo stesso numero di protoni","hanno lo stesso numero di elettroni","hanno la stessa massa"], sol:1},
+  {top:"Isotopi", q:"La massa atomica relativa di un elemento è:", opz:["la massa del singolo atomo","la media ponderata delle masse dei suoi isotopi","sempre un numero intero","sempre uguale a Z"], sol:1},
+  {top:"Isotopi", q:"Il cloro ha massa atomica relativa ≈ 35,5 perché:", opz:["è un solo isotopo","è la media ponderata dei suoi isotopi (35 e 37)","ha 35,5 protoni","è un composto"], sol:1},
+
+  // ---------- IONI ----------
+  {top:"Ioni", q:"Un ione è:", opz:["un atomo carico elettricamente","un atomo neutro","una molecola neutra","un nucleo"], sol:0},
+  {top:"Ioni", q:"Un catione è un ione:", opz:["negativo","positivo","neutro","doppio"], sol:1},
+  {top:"Ioni", q:"Un anione è un ione:", opz:["positivo","negativo","neutro","doppio"], sol:1},
+  {top:"Ioni", q:"Un catione si forma quando un atomo:", opz:["guadagna elettroni","perde elettroni","guadagna protoni","perde neutroni"], sol:1},
+  {top:"Ioni", q:"Un anione si forma quando un atomo:", opz:["perde elettroni","guadagna elettroni","guadagna protoni","perde neutroni"], sol:1},
+  {top:"Ioni", q:"Lo ione Na⁺ ha:", opz:["11 protoni e 11 elettroni","11 protoni e 10 elettroni","10 protoni e 11 elettroni","12 protoni e 10 elettroni"], sol:1},
+  {top:"Ioni", q:"Lo ione Cl⁻ ha:", opz:["17 protoni e 17 elettroni","17 protoni e 18 elettroni","18 protoni e 17 elettroni","16 protoni e 18 elettroni"], sol:1},
+  {top:"Ioni", q:"La carica di un ione dipende dalla differenza tra:", opz:["protoni e neutroni","protoni ed elettroni","neutroni ed elettroni","massa e volume"], sol:1},
+  {top:"Ioni", q:"Un atomo con Z = 12 che perde 2 elettroni diventa:", opz:["un anione con carica −2","un catione con carica +2","un atomo neutro","un isotope"], sol:1},
+  {top:"Ioni", q:"Gli ioni si formano per:", opz:["condivisione di elettroni","trasferimento di elettroni","divisione del nucleo","fusione"], sol:1},
+
+  // ---------- LEGAME COVALENTE ----------
+  {top:"Legame covalente", q:"Il legame covalente è basato sulla:", opz:["condivisione di elettroni","trasferimento di elettroni","perdita di protoni","condivisione di neutroni"], sol:0},
+  {top:"Legame covalente", q:"Un legame covalente semplice (singolo) comporta la condivisione di:", opz:["1 coppia di elettroni","2 coppie di elettroni","3 coppie di elettroni","nessun elettrone"], sol:0},
+  {top:"Legame covalente", q:"Un legame covalente doppio comporta la condivisione di:", opz:["1 coppia di elettroni","2 coppie di elettroni","3 coppie di elettroni","4 coppie di elettroni"], sol:1},
+  {top:"Legame covalente", q:"Un legame covalente triplo comporta la condivisione di:", opz:["2 coppie di elettroni","3 coppie di elettroni","1 coppia di elettroni","4 coppie di elettroni"], sol:1},
+  {top:"Legame covalente", q:"La molecola di H₂ ha un legame:", opz:["singolo","doppio","triplo","ionico"], sol:0},
+  {top:"Legame covalente", q:"La molecola di O₂ ha un legame:", opz:["singolo","doppio","triplo","ionico"], sol:1},
+  {top:"Legame covalente", q:"La molecola di N₂ ha un legame:", opz:["singolo","doppio","triplo","ionico"], sol:2},
+  {top:"Legame covalente", q:"Un legame covalente polare si forma tra:", opz:["due atomi identici","due atomi diversi con diversa elettronegatività","un metallo e un non metallo","due metalli"], sol:1},
+  {top:"Legame covalente", q:"Un legame covalente apolare si forma tra:", opz:["due atomi diversi","due atomi uguali (o con stessa elettronegatività)","un metallo e un non metallo","due ioni"], sol:1},
+  {top:"Legame covalente", q:"In un legame polare gli elettroni sono:", opz:["condivisi in modo equo","condivisi in modo diseguale","trasferiti","assenti"], sol:1},
+  {top:"Legame covalente", q:"In un legame apolare gli elettroni sono:", opz:["condivisi in modo diseguale","condivisi in modo equo","trasferiti","assenti"], sol:1},
+  {top:"Legame covalente", q:"Il legame covalente è tipico di:", opz:["metalli","non metalli","sali","ioni"], sol:1},
+  {top:"Legame covalente", q:"La molecola di H₂O ha legami:", opz:["ionici","covalenti polari","covalenti apolari","metallici"], sol:1},
+  {top:"Legame covalente", q:"Il dipolo in una molecola polare è:", opz:["una separazione di cariche parziali","una carica totale","un legame ionico","un atomo neutro"], sol:0},
+  {top:"Legame covalente", q:"La molecola di CO₂ ha legami:", opz:["ionici","covalenti polari","metallici","nucleari"], sol:1},
+
+  // ---------- LEGAME IONICO ----------
+  {top:"Legame ionico", q:"Il legame ionico si forma per:", opz:["condivisione di elettroni","trasferimento di elettroni","condivisione di protoni","perdita di neutroni"], sol:1},
+  {top:"Legame ionico", q:"Il legame ionico si forma tra:", opz:["due non metalli","un metallo e un non metallo","due metalli","due ioni uguali"], sol:1},
+  {top:"Legame ionico", q:"Il NaCl si forma per:", opz:["condivisione di 2 elettroni","trasferimento di 1 elettrone da Na a Cl","perdita di protoni","condivisione di neutroni"], sol:1},
+  {top:"Legame ionico", q:"Lo ione Na⁺ è:", opz:["un anione","un catione","un atomo neutro","un elettrone"], sol:1},
+  {top:"Legame ionico", q:"Lo ione Cl⁻ è:", opz:["un catione","un anione","un atomo neutro","un protone"], sol:1},
+  {top:"Legame ionico", q:"I composti ionici hanno punti di fusione:", opz:["molto bassi","molto alti","nulli","variabili a caso"], sol:1},
+  {top:"Legame ionico", q:"I composti ionici conducono corrente elettrica:", opz:["sempre, anche allo stato solido","quando sono fusi o sciolti","mai","solo a temperatura ambiente"], sol:1},
+  {top:"Legame ionico", q:"I composti ionici sono tipicamente:", opz:["gas","cristallini","liquidi","gassosi"], sol:1},
+  {top:"Legame ionico", q:"Il legame ionico è mantenuto da:", opz:["forze elettrostatiche tra ioni di carica opposta","condivisione di elettroni","legami metallici","forze nucleari"], sol:0},
+  {top:"Legame ionico", q:"In un composto ionico:", opz:["la carica positiva e negativa non si bilanciano","la somma delle cariche è zero (si bilanciano)","ci sono solo cationi","ci sono solo anioni"], sol:1},
+  {top:"Legame ionico", q:"L'ossido di magnesio MgO è formato da:", opz:["Mg⁺ e O⁻","Mg²⁺ e O²⁻","Mg²⁻ e O²⁺","Mg e O neutri"], sol:1},
+  {top:"Legame ionico", q:"Il legame ionico è tipico di:", opz:["metalli e non metalli","solo non metalli","solo metalli","solo gas nobili"], sol:0},
+
+  // ---------- LEGAME METALLICO ----------
+  {top:"Legame metallico", q:"Il legame metallico si forma tra:", opz:["non metalli","atomi di metallo","un metallo e un non metallo","due ioni"], sol:1},
+  {top:"Legame metallico", q:"Nei metalli gli elettroni di valenza sono:", opz:["localizzati","delocalizzati","assenti","carichi positivamente"], sol:1},
+  {top:"Legame metallico", q:"I metalli conducono corrente elettrica perché:", opz:["hanno elettroni delocalizzati","sono ionici","sono covalenti","sono gassosi"], sol:0},
+  {top:"Legame metallico", q:"I metalli sono:", opz:["fragili e non duttili","duttili e malleabili","gassosi","cristallini non conduttori"], sol:1},
+  {top:"Legame metallico", q:"I metalli hanno:", opz:["aspetto opaco","lucentezza (aspetto lucido)","colore variabile","forma gassosa"], sol:1},
+  {top:"Legame metallico", q:"I metalli conducono il calore:", opz:["molto male","molto bene","mai","solo se fusi"], sol:1},
+  {top:"Legame metallico", q:"La malleabilità dei metalli è spiegata dal:", opz:["legame ionico","legame metallico","legame covalente","legame a idrogeno"], sol:1},
+  {top:"Legame metallico", q:"Un metallo è un buon conduttore di:", opz:["solo luce","elettricità e calore","solo suono","solo aria"], sol:1},
+  {top:"Legame metallico", q:"La duttilità è la capacità di un metallo di:", opz:["spezzarsi","essere ridotto in fili","essere gassoso","essere opaco"], sol:1},
+  {top:"Legame metallico", q:"Il legame metallico spiega perché i metalli sono:", opz:["fragili e isolanti","conduttori e malleabili","gassosi e opachi","cristallini non conduttori"], sol:1}
+];
+
+/* ================================================================
+   LOGICA DEL QUIZ
+   ================================================================ */
+const N_SESSIONE = 10;
+const LETTERE = ["A","B","C","D"];
+
+let sessione = [];      // domande della sessione (con opzioni mescolate)
+let risposte = [];      // indice scelto per ogni domanda
+let corrente = 0;
+
+const $ = id => document.getElementById(id);
+
+function mescola(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function nuovaSessione(){
+  const scelte = mescola(DOMANDE).slice(0, N_SESSIONE);
+  sessione = scelte.map(d=>{
+    const indiceOpz = d.opz.map((_,i)=>i);
+    const nuovoOrdine = mescola(indiceOpz);
+    return {
+      top: d.top,
+      q: d.q,
+      opz: nuovoOrdine.map(i=>d.opz[i]),
+      sol: nuovoOrdine.indexOf(d.sol)
+    };
+  });
+  risposte = new Array(N_SESSIONE).fill(-1);
+  corrente = 0;
+}
+
+function mostraSchermo(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  $(id).classList.add("active");
+}
+
+function buildNavbar(){
+  const nav = $("navbar");
+  nav.innerHTML = "";
+  const prev = document.createElement("button");
+  prev.className = "nav-arrow"; prev.textContent = "‹";
+  prev.disabled = corrente === 0;
+  prev.onclick = ()=>{ if(corrente>0){ corrente--; renderDomanda(); } };
+  nav.appendChild(prev);
+
+  for(let i=0;i<N_SESSIONE;i++){
+    const n = document.createElement("div");
+    n.className = "nav-num" + (i===corrente?" current":"") + (risposte[i]!==-1?" answered":"");
+    n.textContent = i+1;
+    n.onclick = ()=>{ corrente=i; renderDomanda(); };
+    nav.appendChild(n);
+  }
+
+  const next = document.createElement("button");
+  next.className = "nav-arrow"; next.textContent = "›";
+  next.disabled = corrente === N_SESSIONE-1;
+  next.onclick = ()=>{ if(corrente<N_SESSIONE-1){ corrente++; renderDomanda(); } };
+  nav.appendChild(next);
+}
+
+function renderDomanda(){
+  const d = sessione[corrente];
+  $("qTitle").textContent = d.top;
+  $("qText").textContent = d.q;
+  $("qCount").textContent = `Domanda ${corrente+1} di ${N_SESSIONE}`;
+
+  const opts = $("qOpts");
+  opts.innerHTML = "";
+  d.opz.forEach((opz,i)=>{
+    const row = document.createElement("div");
+    row.className = "opt" + (risposte[corrente]===i ? " selected":"");
+    row.innerHTML = `
+      <span class="letter">${LETTERE[i]}.</span>
+      <input type="radio" name="opz" id="opz${i}" ${risposte[corrente]===i?"checked":""}>
+      <label for="opz${i}">${opz}</label>`;
+    row.onclick = ()=>{
+      risposte[corrente] = i;
+      renderDomanda();
+    };
+    opts.appendChild(row);
+  });
+
+  const btn = $("btnNext");
+  if(corrente === N_SESSIONE-1){
+    btn.textContent = "Concludi il test ✔";
+    btn.onclick = ()=>{
+      const nonRisp = risposte.indexOf(-1);
+      if(nonRisp !== -1){
+        if(confirm(`Hai ${risposte.filter(r=>r===-1).length} domanda/e senza risposta. Vuoi concludere comunque?`)){
+          terminaTest();
+        }
+      } else {
+        terminaTest();
+      }
+    };
+  } else {
+    btn.textContent = "Avanti →";
+    btn.onclick = ()=>{
+      if(risposte[corrente]===-1){
+        if(!confirm("Non hai risposto a questa domanda. Continuare?")) return;
+      }
+      corrente++;
+      renderDomanda();
+    };
+  }
+
+  buildNavbar();
+
+  const fatte = risposte.filter(r=>r!==-1).length;
+  $("progressFill").style.width = (fatte/N_SESSIONE*100)+"%";
+}
+
+function terminaTest(){
+  let corrette = 0;
+  sessione.forEach((d,i)=>{ if(risposte[i]===d.sol) corrette++; });
+  const voto = corrette;
+
+  $("scoreBig").textContent = voto.toFixed(1);
+  $("scoreCount").textContent = corrette;
+
+  const v = $("verdict");
+  if(voto >= 8){ v.textContent = "Ottimo lavoro! 🎉"; v.className="verdict good"; }
+  else if(voto >= 6){ v.textContent = "Buon risultato, quasi ce l'hai! 👍"; v.className="verdict mid"; }
+  else if(voto >= 4){ v.textContent = "C'è da ripassare un po'. 📖"; v.className="verdict mid"; }
+  else { v.textContent = "Non scoraggiarti: ripassiamo insieme! 💪"; v.className="verdict bad"; }
+
+  const errList = $("listErrors");
+  const okList = $("listOk");
+  errList.innerHTML = "";
+  okList.innerHTML = "";
+
+  const errori = [];
+  const corretteQ = [];
+  sessione.forEach((d,i)=>{
+    if(risposte[i]===d.sol) corretteQ.push(i);
+    else errori.push(i);
+  });
+
+  if(errori.length === 0){
+    errList.innerHTML = `<div style="background:var(--green-bg);border:1px solid #a5d6a7;border-radius:8px;padding:16px;color:var(--green);font-weight:600;text-align:center;">🎉 Perfetto! Nessuna domanda errata.</div>`;
+  } else {
+    errori.forEach(i=>{
+      const d = sessione[i];
+      const el = document.createElement("div");
+      el.className = "res-q";
+      let chosenHtml = "";
+      if(risposte[i] === -1){
+        chosenHtml = `<div class="rq-ans chosen-wrong"><span class="tag">Tua</span>Nessuna risposta</div>`;
+      } else {
+        chosenHtml = `<div class="rq-ans chosen-wrong"><span class="tag">Tua</span>✗ ${LETTERE[risposte[i]]}. ${d.opz[risposte[i]]}</div>`;
+      }
+      el.innerHTML = `
+        <div class="rq-top">
+          <span class="rq-num">Domanda ${i+1} — ${d.top}</span>
+          <span class="badge err">ERRATA</span>
+        </div>
+        <div class="rq-text">${d.q}</div>
+        ${chosenHtml}
+        <div class="rq-ans correct"><span class="tag">Corretta</span>✔ ${LETTERE[d.sol]}. ${d.opz[d.sol]}</div>`;
+      errList.appendChild(el);
+    });
+  }
+
+  corretteQ.forEach(i=>{
+    const d = sessione[i];
+    const el = document.createElement("div");
+    el.className = "res-q ok";
+    el.innerHTML = `
+      <div class="rq-top">
+        <span class="rq-num">Domanda ${i+1} — ${d.top}</span>
+        <span class="badge ok">CORRETTA</span>
+      </div>
+      <div class="rq-text">${d.q}</div>
+      <div class="rq-ans correct"><span class="tag">Tua</span>✔ ${LETTERE[risposte[i]]}. ${d.opz[risposte[i]]}</div>`;
+    okList.appendChild(el);
+  });
+
+  $("btnToggleOk").style.display = corretteQ.length>0 ? "inline" : "none";
+
+  mostraSchermo("screenResults");
+  $("navbar").style.display = "none";
+  $("progressWrap").style.display = "none";
+  $("btnExit").style.display = "inline-block";
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+$("btnStart").onclick = ()=>{
+  nuovaSessione();
+  mostraSchermo("screenQuiz");
+  $("navbar").style.display = "flex";
+  $("progressWrap").style.display = "block";
+  $("btnExit").style.display = "inline-block";
+  renderDomanda();
+};
+
+$("btnRetry").onclick = ()=>{
+  nuovaSessione();
+  mostraSchermo("screenQuiz");
+  $("navbar").style.display = "flex";
+  $("progressWrap").style.display = "block";
+  $("btnExit").style.display = "inline-block";
+  renderDomanda();
+};
+
+$("btnExit").onclick = ()=>{
+  mostraSchermo("screenStart");
+  $("navbar").style.display = "none";
+  $("progressWrap").style.display = "none";
+  $("btnExit").style.display = "none";
+};
+
+$("btnToggleOk").onclick = ()=>{
+  const results = document.querySelector(".results");
+  results.classList.toggle("show-ok");
+};
+
+console.log("Domande nella banca:", DOMANDE.length);
+</script>
+</body>
+</html>
