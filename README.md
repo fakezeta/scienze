@@ -1,6 +1,6 @@
 # 🔬 Quiz di Scienze
 
-Collezione di **quiz interattivi** per ripassare Scienze: atmosfera, chimica, la materia, la Terra e la Luna.
+Collezione di **quiz interattivi** per ripassare Scienze: atmosfera, chimica, la materia, le particelle, le leggi dei gas e la Terra.
 Ogni quiz è un file HTML autonomo (HTML + CSS + JavaScript puro, senza dipendenze): basta aprirlo in un browser, nessuna installazione.
 
 🌐 **Versione online:** <https://fakezeta.github.io/scienze>
@@ -15,8 +15,10 @@ Ogni quiz è un file HTML autonomo (HTML + CSS + JavaScript puro, senza dipenden
 | 🧪 **Chimica** | [`quiz-chimica.html`](quiz-chimica.html) | 100 | Cap. 1 Tavola periodica · Cap. 2 I composti · Cap. 3 Le reazioni · Cap. 4 Velocità ed equilibrio |
 | ⚛️ **La Materia** | [`quiz-materia.html`](quiz-materia.html) | 111 | Stati fisici, passaggi di stato, elementi e composti, miscele, proprietà, separazioni, trasformazioni |
 | 🌍 **La Terra e la Luna** | [`quiz-terra.html`](quiz-terra.html) | 102 | Forma e dimensioni della Terra, coordinate geografiche, carte geografiche, cartografia digitale, rotazione, rivoluzione, fusi orari, la Luna |
+| ⚛️ **Le Particelle della Materia** | [`quiz-particelle.html`](quiz-particelle.html) | 100 | Teoria atomica, leggi ponderali, particelle subatomiche, struttura dell'atomo, isotopi, ioni, legami covalente, ionico e metallico |
+| 🎈 **Dalle leggi dei gas alla mole** | [`quiz-gas-mole.html`](quiz-gas-mole.html) | 100 | Leggi di Boyle, Charles e Gay-Lussac, zero assoluto, massa atomica, unità di massa atomica, la mole, numero di Avogadro, calcoli in moli |
 
-**Totale: 422 domande a scelta multipla** con correzione immediata e spiegazioni.
+**Totale: 622 domande a scelta multipla** con correzione immediata e spiegazioni.
 
 ## 🚀 Come usarli
 
@@ -36,7 +38,9 @@ scienze/
 ├── quiz-atmosfera.html
 ├── quiz-chimica.html
 ├── quiz-materia.html
-└── quiz-terra.html
+├── quiz-terra.html
+├── quiz-particelle.html
+└── quiz-gas-mole.html
 ```
 
 
